@@ -1,5 +1,35 @@
 use std::collections::{ HashMap, HashSet, VecDeque };
 
+struct State {
+    childs: Vec<State>,
+    set: HashSet<usize>,
+    position: HashSet<(usize, usize)>
+}
+
+impl State {
+    fn has(&mut self, set: &HashSet<usize>) {
+        for child in self.childs.iter_mut() {
+            println!("{:?} {:?} {:?}", child.set, set, child.set.is_superset(&set));
+            if child.set.is_superset(&set) {
+                child.has(&set);
+                return;
+            }
+        }
+        self.childs.push(State {
+            childs: Vec::new(),
+            set: set.clone()
+        });
+    }
+
+    fn print(&self, i: usize) {
+        println!("{}: {:?}", i, self.set);
+        for child in self.childs.iter() {
+            child.print(i+1);
+        }
+        
+    }
+}
+
 fn main(){
     let mut s = Vec::new();
     s.push("abcba".chars().collect::<Vec<char>>());
@@ -36,6 +66,11 @@ fn main(){
 
     let mut fa_states: Vec<Vec<usize>> = Vec::new();
     fa_states.push((0..last).collect::<Vec<usize>>());
+    let mut state_set_tree = State {
+        set: (0..last).collect::<HashSet<usize>>(),
+        childs: Vec::new()
+    };
+    println!("{:?}", state_set_tree.set);
     let mut fa_trans = HashMap::new();
 
     let mut i = 0;
@@ -56,10 +91,11 @@ fn main(){
                     if tmp[0] == u[0] {
                         fa_trans.insert((fa_states[i].clone(), t), u.clone());
                         continue 'outer;
+                    }
                 }
-            }
                 fa_trans.insert((fa_states[i].clone(), t), tmp.clone());
                 fa_states.push(tmp.clone());
+                state_set_tree.has(&tmp.into_iter().collect::<HashSet<usize>>());
             }
         }
         i+=1;
@@ -67,4 +103,6 @@ fn main(){
     println!("{:?}", fa_states);
     println!("--------------------------------");
     println!("{:?}", fa_trans);
+
+    state_set_tree.print(0);
 }
