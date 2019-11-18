@@ -7,22 +7,36 @@ struct State {
 }
 
 impl State {
-    fn has(&mut self, set: &HashSet<usize>) {
+    fn add(&mut self, set: &HashSet<usize>, set_pos: &HashSet<(usize, usize)>) {
         for child in self.childs.iter_mut() {
-            println!("{:?} {:?} {:?}", child.set, set, child.set.is_superset(&set));
             if child.set.is_superset(&set) {
-                child.has(&set);
+                for i in set_pos {
+                    child.position.remove(i);
+                }
+                child.add(&set, &set_pos);
                 return;
             }
         }
         self.childs.push(State {
             childs: Vec::new(),
-            set: set.clone()
+            set: set.clone(),
+            position: set_pos.clone()
         });
     }
 
+    fn search(&mut self, set: &HashSet<usize>) -> HashSet<(usize, usize)> {
+        for child in self.childs.iter_mut() {
+            if child.set.clone() == set.clone() {
+                return child.position.clone();
+            } else if child.set.is_superset(&set) {
+                return child.search(&set);
+            }
+        }
+        return self.position.clone();
+    }
+
     fn print(&self, i: usize) {
-        println!("{}: {:?}", i, self.set);
+        println!("{}: {:?} {:?}", i, self.set, self.position);
         for child in self.childs.iter() {
             child.print(i+1);
         }
@@ -66,20 +80,33 @@ fn main(){
 
     let mut fa_states: Vec<Vec<usize>> = Vec::new();
     fa_states.push((0..last).collect::<Vec<usize>>());
+//    let mut initial_pos: HashSet<(usize, usize)> = HashSet::new();
+//    for i in dist.iter() {
+//        for j in i {
+//            println!("{:?}", j);
+//            initial_pos.insert(*j);
+//        }
+//    }
     let mut state_set_tree = State {
         set: (0..last).collect::<HashSet<usize>>(),
-        childs: Vec::new()
+        childs: Vec::new(),
+        position: HashSet::new()
+//        position: initial_pos
     };
-    println!("{:?}", state_set_tree.set);
+
     let mut fa_trans = HashMap::new();
 
     let mut i = 0;
     while fa_states.len() > i {
         'outer: for t in hs.iter() {
             let mut tmp = Vec::new();
+            let mut tmp_pos = HashSet::new();
             for s in fa_states[i].iter() {
                 match h.get(&(*s, **t)) {
                     Some(x) => {
+                        for t in dist[*x - 1].iter() {
+                            tmp_pos.insert(*t);
+                        }
                         tmp.push(*x);
                     },
                     None => {}
@@ -95,7 +122,7 @@ fn main(){
                 }
                 fa_trans.insert((fa_states[i].clone(), t), tmp.clone());
                 fa_states.push(tmp.clone());
-                state_set_tree.has(&tmp.into_iter().collect::<HashSet<usize>>());
+                state_set_tree.add(&tmp.into_iter().collect::<HashSet<usize>>(), &tmp_pos);
             }
         }
         i+=1;
@@ -105,4 +132,7 @@ fn main(){
     println!("{:?}", fa_trans);
 
     state_set_tree.print(0);
+    let mut searchable: HashSet<usize> = HashSet::new();
+    searchable.insert(6);
+    println!("{:?}", state_set_tree.search(&searchable))
 }
