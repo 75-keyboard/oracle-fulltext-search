@@ -2,6 +2,74 @@ use bytes::Bytes;
 use std::collections::{ HashMap, HashSet, BinaryHeap };
 use std::cmp::{ Ordering, Reverse };
 
+struct FactorOracle {
+    states: Vec<Vec<usize>>,
+    trans: HashMap<(Vec<usize>, &char), Vec<usize>>,
+    state_set_tree: State
+}
+
+impl FactorOracle {
+    pub fn new(tries: Trie) -> FactorOracle {
+        let mut fa_states: Vec<Vec<usize>> = Vec::new();
+        fa_states.push((0..tries.states.len()).collect::<Vec<usize>>());
+    //    let mut initial_pos: HashSet<(usize, usize)> = HashSet::new();
+    //    for i in dist.iter() {
+    //        for j in i {
+    //            println!("{:?}", j);
+    //            initial_pos.insert(*j);
+    //        }
+    //    }
+        let mut state_set_tree = State {
+            set: (0..tries.states.len()).collect::<HashSet<usize>>(),
+            childs: Vec::new(),
+            position: HashSet::new()
+    //        position: initial_pos
+        };
+
+        let mut fa_trans = HashMap::new();
+        let mut occurence: HashMap<&char, i64> = HashMap::new();
+
+        let mut i = 0;
+        while fa_states.len() > i {
+            'outer: for t in tries.states.iter() {
+                let mut tmp = Vec::new();
+                let mut tmp_pos = HashSet::new();
+                for s in fa_states[i].iter() {
+                    match tries.trans.get(&(*s, *t)) {
+                        Some(x) => {
+                            for t in tries.position[*x - 1].iter() {
+                                tmp_pos.insert(*t);
+                            }
+                            tmp.push(*x);
+                        },
+                        None => {}
+                    }
+                }
+                if tmp.len() > 0 {
+                    let counter = occurence.entry(t).or_insert(0);
+                    *counter += 1;
+                    tmp.sort();
+                    'inner: for u in fa_states.iter() {
+                        if tmp[0] == u[0] {
+                            fa_trans.insert((fa_states[i].clone(), t), u.clone());
+                            continue 'outer;
+                        }
+                    }
+                    fa_trans.insert((fa_states[i].clone(), t), tmp.clone());
+                    fa_states.push(tmp.clone());
+                    state_set_tree.add(&tmp.into_iter().collect::<HashSet<usize>>(), &tmp_pos);
+                }
+            }
+            i+=1;
+        }
+
+        FactorOracle {
+            states: fa_states,
+            trans: fa_trans,
+            state_set_tree: state_set_tree
+        }
+    }
+}
 fn main(){
     let mut s = Vec::new();
 //    s.push(Bytes::from(&b"abcba"[..]));
@@ -14,18 +82,18 @@ fn main(){
     println!("{:?}", tries.trans);
     println!("{:?}", tries.states);
     println!("{:?}", tries.position);
+    let fa = FactorOracle::new(tries);
 
-    let mut fa = FactorOracle::new(tries);
-    println!("{:?}", fa.states);
+    println!("{:?}", fa_states);
     println!("--------------------------------");
-    println!("{:?}", fa.trans);
+    println!("{:?}", fa_trans);
 
-    fa.state_set_tree.print(0);
+    state_set_tree.print(0);
     let mut searchable: HashSet<usize> = HashSet::new();
     searchable.insert(6);
-    println!("{:?}", fa.state_set_tree.search(&searchable));
-    println!("Info Occurence {:?}", fa.occurence);
-    println!("{:?}", HuffmanCode::new(fa.occurence).code_info);
+    println!("{:?}", state_set_tree.search(&searchable));
+    println!("Info Occurence {:?}", occurence);
+    println!("{:?}", HuffmanCode::new(occurence).code_info);
 }
 
 struct HuffmanCode {
@@ -33,10 +101,10 @@ struct HuffmanCode {
 }
 
 impl HuffmanCode {
-    pub fn new(data: HashMap<char, i64>) -> HuffmanCode {
+    pub fn new(data: HashMap<&char, i64>) -> HuffmanCode {
         let mut queue: BinaryHeap<TreeNode> = BinaryHeap::new();
         for (key, val) in data.iter() {
-            queue.push(TreeNode::new((*key, -*val, Vec::with_capacity(2))));
+            queue.push(TreeNode::new((**key, -*val, Vec::with_capacity(2))));
         }
         while queue.len() > 1 {
             let n: (TreeNode, TreeNode) = (queue.pop().unwrap(), queue.pop().unwrap());
@@ -139,77 +207,6 @@ impl State {
             child.print(i+1);
         }
         
-    }
-}
-
-struct FactorOracle {
-    states: Vec<Vec<usize>>,
-    trans: HashMap<(Vec<usize>, char), Vec<usize>>,
-    state_set_tree: State,
-    occurence: HashMap<char, i64>
-}
-
-impl FactorOracle {
-    pub fn new(tries: Trie) -> FactorOracle {
-        let mut fa_states: Vec<Vec<usize>> = Vec::new();
-        fa_states.push((0..tries.states.len()).collect::<Vec<usize>>());
-    //    let mut initial_pos: HashSet<(usize, usize)> = HashSet::new();
-    //    for i in dist.iter() {
-    //        for j in i {
-    //            println!("{:?}", j);
-    //            initial_pos.insert(*j);
-    //        }
-    //    }
-        let mut state_set_tree = State {
-            set: (0..tries.states.len()).collect::<HashSet<usize>>(),
-            childs: Vec::new(),
-            position: HashSet::new()
-    //        position: initial_pos
-        };
-
-        let mut fa_trans = HashMap::new();
-        let mut occurence: HashMap<char, i64> = HashMap::new();
-
-        let mut i = 0;
-        while fa_states.len() > i {
-            'outer: for t in tries.states.iter() {
-                let mut tmp = Vec::new();
-                let mut tmp_pos = HashSet::new();
-                for s in fa_states[i].iter() {
-                    match tries.trans.get(&(*s, *t)) {
-                        Some(x) => {
-                            for t in tries.position[*x - 1].iter() {
-                                tmp_pos.insert(*t);
-                            }
-                            tmp.push(*x);
-                        },
-                        None => {}
-                    }
-                }
-                if tmp.len() > 0 {
-                    let counter = occurence.entry(*t).or_insert(0);
-                    *counter += 1;
-                    tmp.sort();
-                    'inner: for u in fa_states.iter() {
-                        if tmp[0] == u[0] {
-                            fa_trans.insert((fa_states[i].clone(), *t), u.clone());
-                            continue 'outer;
-                        }
-                    }
-                    fa_trans.insert((fa_states[i].clone(), *t), tmp.clone());
-                    fa_states.push(tmp.clone());
-                    state_set_tree.add(&tmp.into_iter().collect::<HashSet<usize>>(), &tmp_pos);
-                }
-            }
-            i+=1;
-        }
-
-        FactorOracle {
-            states: fa_states,
-            trans: fa_trans,
-            state_set_tree: state_set_tree,
-            occurence: occurence
-        }
     }
 }
 
