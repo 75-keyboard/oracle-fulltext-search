@@ -1,6 +1,5 @@
-use bytes::Bytes;
 use std::collections::{ HashMap, HashSet, BinaryHeap };
-use std::cmp::{ Ordering, Reverse };
+use std::cmp::{ Ordering };
 
 fn main(){
     let mut s = Vec::new();
@@ -15,17 +14,19 @@ fn main(){
     println!("{:?}", tries.states);
     println!("{:?}", tries.position);
 
-    let mut fa = FactorOracle::new(tries);
+    let fa = FactorOracle::new(tries);
     println!("{:?}", fa.states);
     println!("--------------------------------");
     println!("{:?}", fa.trans);
 
-    fa.state_set_tree.print(0);
-    let mut searchable: HashSet<usize> = HashSet::new();
-    searchable.insert(6);
-    println!("{:?}", fa.state_set_tree.search(&searchable));
-    println!("Info Occurence {:?}", fa.occurence);
-    println!("{:?}", HuffmanCode::new(fa.occurence).code_info);
+    //fa.state_set_tree.print(0);
+    //let mut searchable: HashSet<usize> = HashSet::new();
+    //searchable.insert(6);
+    //println!("{:?}", fa.state_set_tree.search(&searchable));
+    let hc = HuffmanCode::new(fa.occurence);
+    for (k, v) in hc.code_info.iter() {
+        println!("{}: {:0b}", k, v);
+    }
 }
 
 struct HuffmanCode {
@@ -41,7 +42,7 @@ impl HuffmanCode {
         while queue.len() > 1 {
             let n: (TreeNode, TreeNode) = (queue.pop().unwrap(), queue.pop().unwrap());
             queue.push(TreeNode::new((
-                            n.0.value,
+                            ' ',
                             n.0.occurence + n.1.occurence,
                             vec![n.0, n.1]
                         )));
@@ -59,8 +60,9 @@ fn dfs(code_info: &mut HashMap<char, usize>, node: &TreeNode, code: usize, code_
     if !node.childs.is_empty() {
         dfs(code_info, &node.childs[0], code << 1, code_size+1);
         dfs(code_info, &node.childs[1], (code << 1) + 1, code_size+1);
+    } else {
+        code_info.insert(node.value, code);
     }
-    code_info.insert(node.value, code);
 }
 
 #[derive(Eq)]
