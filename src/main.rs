@@ -24,9 +24,21 @@ fn main(){
     let hc = HuffmanCode::new(fa.occurence);
     hc.print_code_info();
 
-    let mut cfa: Vec<i128> = Vec::new();
+    let mut cfa: Vec<u8> = Vec::new();
     cfa.push(0);
-    
+
+    for i in 0..fa.states.len() {
+        print!("{:?}: ", fa.states[i]);
+        match fa.trans.get(&i) {
+            Some(x) => {
+                for (j, k) in x.iter() {
+                    print!("{:?} by {}, ", fa.states[*k], j);
+                }
+            },
+            None => {}
+        }
+        println!("");
+    }
 }
 
 struct HuffmanCode {
@@ -152,7 +164,7 @@ impl State {
 
 struct FactorOracle {
     states: Vec<Vec<usize>>,
-    trans: HashMap<(Vec<usize>, char), Vec<usize>>,
+    trans: HashMap<usize, HashMap<char, usize>>,
     state_set_tree: State,
     occurence: HashMap<char, i64>
 }
@@ -175,7 +187,7 @@ impl FactorOracle {
     //        position: initial_pos
         };
 
-        let mut fa_trans = HashMap::new();
+        let mut fa_trans: HashMap<usize, HashMap<char, usize>> = HashMap::new();
         let mut occurence: HashMap<char, i64> = HashMap::new();
 
         let mut i = 0;
@@ -198,13 +210,32 @@ impl FactorOracle {
                     let counter = occurence.entry(*t).or_insert(0);
                     *counter += 1;
                     tmp.sort();
-                    'inner: for u in fa_states.iter() {
-                        if tmp[0] == u[0] {
-                            fa_trans.insert((fa_states[i].clone(), *t), u.clone());
+                    'inner: for u in 0..fa_states.len() {
+                        if tmp[0] == fa_states[u][0] {
+                            match fa_trans.get_mut(&i) {
+                                Some (x) => {
+                                    x.insert(*t, u);
+                                },
+                                None => {
+                                    let mut h: HashMap<char, usize> = HashMap::new();
+                                    h.insert(*t, u);
+                                    fa_trans.insert(i, h);
+                                }
+                            }
                             continue 'outer;
                         }
                     }
-                    fa_trans.insert((fa_states[i].clone(), *t), tmp.clone());
+                    match fa_trans.get_mut(&i) {
+                        Some (x) => {
+                            x.insert(*t, fa_states.len());
+                        },
+                        None => {
+                            let mut h: HashMap<char, usize> = HashMap::new();
+                            h.insert(*t, fa_states.len());
+                            fa_trans.insert(i, h);
+                        }
+                    }
+                    
                     fa_states.push(tmp.clone());
                     state_set_tree.add(&tmp.into_iter().collect::<HashSet<usize>>(), &tmp_pos);
                 }
