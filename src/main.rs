@@ -10,12 +10,10 @@ fn main(){
     println!("{:?}", s);
 
     let tries = Trie::new(s);
-//    println!("{:?}", tries.trans);
-//    println!("{:?}", tries.states);
-//    println!("{:?}", tries.position);
 
     let fa = FactorOracle::new(tries);
     println!("{:?}", fa.states);
+    println!("{:?}", fa.state_set_tree.print(0));
     println!("--------------------------------");
     println!("{:?}", fa.trans);
 
@@ -162,7 +160,7 @@ struct FactorOracle {
 impl FactorOracle {
     pub fn new(tries: Trie) -> FactorOracle {
         let mut fa_states: Vec<Vec<usize>> = Vec::new();
-        fa_states.push((0..tries.states.len()).collect::<Vec<usize>>());
+        fa_states.push((0..tries.trans.len()).collect::<Vec<usize>>());
     //    let mut initial_pos: HashSet<(usize, usize)> = HashSet::new();
     //    for i in dist.iter() {
     //        for j in i {
@@ -171,7 +169,7 @@ impl FactorOracle {
     //        }
     //    }
         let mut state_set_tree = State {
-            set: (0..tries.states.len()).collect::<HashSet<usize>>(),
+            set: (0..tries.trans.len()).collect::<HashSet<usize>>(),
             childs: Vec::new(),
             position: HashSet::new()
     //        position: initial_pos
@@ -182,7 +180,7 @@ impl FactorOracle {
 
         let mut i = 0;
         while fa_states.len() > i {
-            'outer: for t in tries.states.iter() {
+            'outer: for t in tries.alphabet.iter() {
                 let mut tmp = Vec::new();
                 let mut tmp_pos = HashSet::new();
                 for s in fa_states[i].iter() {
@@ -224,7 +222,7 @@ impl FactorOracle {
 }
 
 struct Trie {
-    states: HashSet<char>,
+    alphabet: HashSet<char>,
     trans: HashMap<(usize, char), usize>,
     position: Vec<Vec<(usize, usize)>>
 }
@@ -232,13 +230,13 @@ struct Trie {
 impl Trie {
     pub fn new(s: Vec<Vec<char>>) -> Trie {
         let mut trie_trans = HashMap::new();
-        let mut trie_states = HashSet::new();
+        let mut trie_alphabet = HashSet::new();
         let mut last = 0;
         let mut dist: Vec<Vec<(usize, usize)>> = Vec::new();
         for i in 0..s.len() {
             let mut crt = 0;
             for j in 0..s[i].len() {
-                trie_states.insert(s[i][j]);
+                trie_alphabet.insert(s[i][j]);
                 match trie_trans.get(&(crt, s[i][j])) {
                     Some(x) => {
                         crt=*x;
@@ -256,7 +254,7 @@ impl Trie {
         }
 
         Trie {
-            states: trie_states,
+            alphabet: trie_alphabet,
             trans: trie_trans,
             position: dist
         }
