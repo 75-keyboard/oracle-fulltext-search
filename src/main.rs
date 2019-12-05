@@ -10,9 +10,9 @@ fn main(){
     println!("{:?}", s);
 
     let tries = Trie::new(s);
-    println!("{:?}", tries.trans);
-    println!("{:?}", tries.states);
-    println!("{:?}", tries.position);
+//    println!("{:?}", tries.trans);
+//    println!("{:?}", tries.states);
+//    println!("{:?}", tries.position);
 
     let fa = FactorOracle::new(tries);
     println!("{:?}", fa.states);
@@ -24,9 +24,11 @@ fn main(){
     //searchable.insert(6);
     //println!("{:?}", fa.state_set_tree.search(&searchable));
     let hc = HuffmanCode::new(fa.occurence);
-    for (k, v) in hc.code_info.iter() {
-        println!("{}: {:0b}", k, v);
-    }
+    hc.print_code_info();
+
+    let mut cfa: Vec<i128> = Vec::new();
+    cfa.push(0);
+    
 }
 
 struct HuffmanCode {
@@ -52,6 +54,12 @@ impl HuffmanCode {
         dfs(&mut code_info, &root, 0, 0);
         HuffmanCode {
             code_info: code_info
+        }
+    }
+
+    fn print_code_info(&self) {
+        for (k, v) in self.code_info.iter() {
+            println!("{}: {:0b}", k, v);
         }
     }
 }
