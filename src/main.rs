@@ -9,13 +9,13 @@ fn main(){
     let mut s = Vec::new();
 //    s.push(Bytes::from(&b"abcba"[..]));
 //    s.push(Bytes::from(&b"abbac"[..]));
-    s.push(read_to_string("data/manual.txt").unwrap()[..10000000].chars().collect::<Vec<char>>());
+    s.push(read_to_string("data/manual.txt").unwrap().chars().collect::<Vec<char>>());
     // for result in BufReader::new(File::open("data/test.txt").unwrap()).lines() {
     //     s.push(result.unwrap().chars().collect());
     // }
 //    println!("{:?}", s);
-    s.push("abcba".chars().collect());
-    s.push("abbac".chars().collect());
+    // s.push("abcba".chars().collect());
+    // s.push("abbac".chars().collect());
     
     let tries = Trie::new(s);
 //    println!("{:?}", tries.alphabet);
@@ -36,7 +36,7 @@ fn main(){
     let mut state_table: HashMap<usize, usize> = HashMap::new();
 
     let mut state_index = 0;
-    let mut bv = BitVec::from_elem(min(100000000000, 512*(hc.code_info.len()*fa.states.len())), false);
+    let mut bv = BitVec::from_elem(min(100000000000, 32*(hc.code_info.len()*fa.states.len())), false);
 
     // convert to binary
     for i in fa.order.iter() {
@@ -101,6 +101,7 @@ fn main(){
                 max_index = max(max_index, state_table[j.1]);
             }
             let width = decide_bits(max_index);
+            // print!(" width {:?} ", width);
             for ii in (0..3).rev() {
                 if 1 << ii & width.1 != 0 {
                     bv.set(state_index, true);
@@ -110,6 +111,7 @@ fn main(){
                 state_index+=1;
             }
             for j in x.iter() {
+                // print!("{:?} {}", j, state_table[j.1]);
                 for ii in (0..width.0).rev() {
                     if 1 << ii & state_table[j.1] != 0 {
                         bv.set(state_index, true);
@@ -143,7 +145,7 @@ fn decide_bits(x: usize) -> (usize, usize) {
     let mut cnt = 0;
     let j = count_bits(x);
     while j > i {
-        i *= 2;
+        i += 4;
         cnt+=1;
     }
     (i, cnt)
@@ -306,17 +308,13 @@ impl FactorOracle {
         while fa_states.len() > i {
 println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
             'outer: for t in tries.alphabet.iter() {
-                let mut tmp = Vec::new();
-                let mut tmp_pos = HashSet::new();
+                let mut tmp: Vec<usize> = Vec::new();
+                let mut tmp_pos: HashSet<(usize, usize)> = HashSet::new();
                 for s in fa_states[i].iter() {
                     match tries.trans.get(&(*s, *t)) {
                         Some(x) => {
-                            for t in tries.position[*x - 1].iter() {
-                                tmp_pos.insert(*t);
-                            }
                             tmp.push(*x);
-                        },
-                        None => {}
+                        }, None => {}
                     }
                 }
                 if tmp.len() > 0 {
@@ -358,6 +356,11 @@ println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
                             continue 'outer;
                         },
                         None => {
+                            for i in tmp.clone().iter() {
+                                for j in tries.position[*i-1].iter() {
+                                    tmp_pos.insert(*j);
+                                }
+                            }
                             match fa_trans.get_mut(&i) {
                                 Some (x) => {
                                     x.insert(*t, fa_states.len());
