@@ -1,21 +1,29 @@
 use std::collections::{ HashMap, HashSet, BinaryHeap };
-use std::cmp::{ Ordering };
+use std::cmp::{ Ordering, max };
+use std::fs::read_to_string;
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
+use bit_vec::BitVec;
 
 fn main(){
     let mut s = Vec::new();
 //    s.push(Bytes::from(&b"abcba"[..]));
 //    s.push(Bytes::from(&b"abbac"[..]));
-    s.push("abcba".chars().collect::<Vec<char>>());
-    s.push("abbac".chars().collect::<Vec<char>>());
-    println!("{:?}", s);
-
+//    s.push(read_to_string("data/manual.txt").unwrap()[..5000].chars().collect::<Vec<char>>());
+    for result in BufReader::new(File::open("data/test.txt").unwrap()).lines() {
+        s.push(result.unwrap().chars().collect());
+    }
+//    println!("{:?}", s);
+    
     let tries = Trie::new(s);
+//    println!("{:?}", tries.alphabet);
+    println!("created trie--------------------------------");
 
     let fa = FactorOracle::new(tries);
-    println!("{:?}", fa.states);
-    println!("{:?}", fa.state_set_tree.print(0));
-    println!("--------------------------------");
-    println!("{:?}", fa.trans);
+//    println!("{:?}", fa.states);
+    println!("created FO--------------------------------");
+//    println!("{:?}", fa.trans);
+//    println!("{:?}", fa.order);
 
     //fa.state_set_tree.print(0);
     //let mut searchable: HashSet<usize> = HashSet::new();
@@ -23,26 +31,125 @@ fn main(){
     //println!("{:?}", fa.state_set_tree.search(&searchable));
     let hc = HuffmanCode::new(fa.occurence);
     hc.print_code_info();
+    let mut state_table: HashMap<usize, usize> = HashMap::new();
 
-    let mut cfa: Vec<u8> = Vec::new();
-    cfa.push(0);
+    let mut state_index = 0;
+    let mut bv = BitVec::from_elem(50000000000, false);
 
-    for i in 0..fa.states.len() {
-        print!("{:?}: ", fa.states[i]);
-        match fa.trans.get(&i) {
-            Some(x) => {
-                for (j, k) in x.iter() {
-                    print!("{:?} by {}, ", fa.states[*k], j);
+    // convert to binary
+    for i in fa.order.iter() {
+        for (j, k) in fa.trans[i].iter() {
+//            println!("{:?}", i);
+            match state_table.get(k) {
+                Some(_) => {},
+                None => {
+//                    print!("{} {}", j, *k);
+                    state_table.insert(*k, state_index);
+                    let trans_code = hc.code_info[j];
+                    // 状態に入ってくる記号を入れてる
+                    for ii in (0..trans_code.1).rev() {
+                        if 1 << ii & trans_code.0 != 0 {
+                            bv.set(state_index, true);
+                        } else {
+                            bv.set(state_index, false);
+                        }
+                        state_index+=1;
+                    }
+                    match fa.trans.get(k) {
+                        Some(x) => {
+                            let mut max_index = 0;
+                            for j in x.iter() {
+                                max_index = max(max_index, state_table[j.1]);
+                            }
+                            let width = decide_bits(max_index);
+//                            print!(" width {:?} ", width);
+                            for ii in (0..3).rev() {
+                                if 1 << ii & width.1 != 0 {
+                                    bv.set(state_index, true);
+                                } else {
+                                    bv.set(state_index, false);
+                                }
+                                state_index+=1;
+                            }
+                            for j in x.iter() {
+//                                print!("{:?} {}", j, state_table[j.1]);
+                                for ii in (0..width.0).rev() {
+                                    if 1 << ii & state_table[j.1] != 0 {
+                                        bv.set(state_index, true);
+                                    } else {
+                                        bv.set(state_index, false);
+                                    }
+                                    state_index+=1;
+                                }
+                            }
+                        }, None => {}
+                    }
                 }
-            },
-            None => {}
+            }
+//            println!("");
         }
-        println!("");
     }
+//    println!("owa {}", state_table.len());
+//    println!("{:?}", fa.trans);
+    let init = state_index.clone();
+    match fa.trans.get(&0) {
+        Some(x) => {
+            let mut max_index = 0;
+            for j in x.iter() {
+                max_index = max(max_index, state_table[j.1]);
+            }
+            let width = decide_bits(max_index);
+            print!(" width {:?} ", width);
+            for ii in (0..3).rev() {
+                if 1 << ii & width.1 != 0 {
+                    bv.set(state_index, true);
+                } else {
+                    bv.set(state_index, false);
+                }
+                state_index+=1;
+            }
+            for j in x.iter() {
+                print!("{:?} {}", j, state_table[j.1]);
+                for ii in (0..width.0).rev() {
+                    if 1 << ii & state_table[j.1] != 0 {
+                        bv.set(state_index, true);
+                    } else {
+                        bv.set(state_index, false);
+                    }
+                    state_index+=1;
+                }
+            }
+            println!("");
+        }, None => {}
+    }
+
+//    println!("{} {}", state_index, init);
+    bv.truncate(state_index);
+    println!("{:?}", bv);
+    println!("{:?}", bv.to_bytes());
+}
+
+fn count_bits(x: usize) -> usize {
+    let mut i = 0;
+    while x >> i > 0 {
+        i += 1;
+    }
+    i
+}
+
+fn decide_bits(x: usize) -> (usize, usize) {
+    let mut i = 4;
+    let mut cnt = 0;
+    let j = count_bits(x);
+    while j > i {
+        i *= 2;
+        cnt+=1;
+    }
+    (i, cnt)
 }
 
 struct HuffmanCode {
-    code_info: HashMap<char, usize>
+    code_info: HashMap<char, (usize, usize)>
 }
 
 impl HuffmanCode {
@@ -60,7 +167,7 @@ impl HuffmanCode {
                         )));
         }
         let root: TreeNode = queue.pop().unwrap();
-        let mut code_info: HashMap<char, usize> = HashMap::new();
+        let mut code_info: HashMap<char, (usize, usize)> = HashMap::new();
         dfs(&mut code_info, &root, 0, 0);
         HuffmanCode {
             code_info: code_info
@@ -69,17 +176,17 @@ impl HuffmanCode {
 
     fn print_code_info(&self) {
         for (k, v) in self.code_info.iter() {
-            println!("{}: {:0b}", k, v);
+            println!("{}: {:0b} {}", k, v.0, v.1);
         }
     }
 }
 
-fn dfs(code_info: &mut HashMap<char, usize>, node: &TreeNode, code: usize, code_size: usize) {
+fn dfs(code_info: &mut HashMap<char, (usize, usize)>, node: &TreeNode, code: usize, code_size: usize) {
     if !node.childs.is_empty() {
         dfs(code_info, &node.childs[0], code << 1, code_size+1);
         dfs(code_info, &node.childs[1], (code << 1) + 1, code_size+1);
     } else {
-        code_info.insert(node.value, code);
+        code_info.insert(node.value, (code, code_size));
     }
 }
 
@@ -166,13 +273,14 @@ struct FactorOracle {
     states: Vec<Vec<usize>>,
     trans: HashMap<usize, HashMap<char, usize>>,
     state_set_tree: State,
-    occurence: HashMap<char, i64>
+    occurence: HashMap<char, i64>,
+    order: Vec<usize>,
 }
 
 impl FactorOracle {
     pub fn new(tries: Trie) -> FactorOracle {
         let mut fa_states: Vec<Vec<usize>> = Vec::new();
-        fa_states.push((0..tries.trans.len()).collect::<Vec<usize>>());
+        fa_states.push((0..tries.trans.len()).collect());
     //    let mut initial_pos: HashSet<(usize, usize)> = HashSet::new();
     //    for i in dist.iter() {
     //        for j in i {
@@ -188,6 +296,7 @@ impl FactorOracle {
         };
 
         let mut fa_trans: HashMap<usize, HashMap<char, usize>> = HashMap::new();
+        let mut fa_trans2: HashMap<usize, HashSet<usize>> = HashMap::new();
         let mut occurence: HashMap<char, i64> = HashMap::new();
 
         let mut i = 0;
@@ -222,6 +331,16 @@ impl FactorOracle {
                                     fa_trans.insert(i, h);
                                 }
                             }
+                            match fa_trans2.get_mut(&i) {
+                                Some (x) => {
+                                    x.insert(u);
+                                },
+                                None => {
+                                    let mut h: HashSet<usize> = HashSet::new();
+                                    h.insert(u);
+                                    fa_trans2.insert(i, h);
+                                }
+                            }
                             continue 'outer;
                         }
                     }
@@ -235,6 +354,16 @@ impl FactorOracle {
                             fa_trans.insert(i, h);
                         }
                     }
+                    match fa_trans2.get_mut(&i) {
+                        Some (x) => {
+                            x.insert(fa_states.len());
+                        },
+                        None => {
+                            let mut h: HashSet<usize> = HashSet::new();
+                            h.insert(fa_states.len());
+                            fa_trans2.insert(i, h);
+                        }
+                    }
                     
                     fa_states.push(tmp.clone());
                     state_set_tree.add(&tmp.into_iter().collect::<HashSet<usize>>(), &tmp_pos);
@@ -242,18 +371,49 @@ impl FactorOracle {
             }
             i+=1;
         }
+        println!("{:?}", fa_trans2.len());
+        for i in 0..fa_states.len() {
+            if fa_trans2.get(&i) == None {
+                fa_trans2.insert(i, HashSet::new());
+            } 
+        }
+        println!("{:?}", fa_trans2.len());
+
+        let mut a = Vec::new();
+        let mut ii = 0;
+        for j in fa_trans2.clone().iter_mut() {
+            if j.1.len() == 0 {
+                a.push(*j.0);
+                fa_trans2.remove(j.0);
+                ii += 1;
+            }
+        }
+        let mut i = 0;
+        while fa_states.len() > i {
+            for j in fa_trans2.clone().iter_mut() {
+                if fa_trans2.entry(*j.0).or_default().remove(&a[i]) && fa_trans2.entry(*j.0).or_default().len() == 0 {
+                    a.push(*j.0);
+                }
+            }
+            i+=1;
+        }
+        println!("{:?}", fa_states.len());
+        println!("{:?}", fa_trans2.len());
+        println!("{:?}", a.len());
+
 
         FactorOracle {
             states: fa_states,
             trans: fa_trans,
             state_set_tree: state_set_tree,
-            occurence: occurence
+            occurence: occurence,
+            order: a[ii..].to_vec(),
         }
     }
 }
 
 struct Trie {
-    alphabet: HashSet<char>,
+    alphabet: Vec<char>,
     trans: HashMap<(usize, char), usize>,
     position: Vec<Vec<(usize, usize)>>
 }
@@ -283,6 +443,8 @@ impl Trie {
                 }
             }
         }
+        let mut trie_alphabet = trie_alphabet.into_iter().collect::<Vec<char>>();
+        trie_alphabet.sort();
 
         Trie {
             alphabet: trie_alphabet,
