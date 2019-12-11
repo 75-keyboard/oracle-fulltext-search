@@ -1,5 +1,5 @@
 use std::collections::{ HashMap, HashSet, BinaryHeap };
-use std::cmp::{ Ordering, max };
+use std::cmp::{ Ordering, max, min };
 use std::fs::read_to_string;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
@@ -9,11 +9,13 @@ fn main(){
     let mut s = Vec::new();
 //    s.push(Bytes::from(&b"abcba"[..]));
 //    s.push(Bytes::from(&b"abbac"[..]));
-//    s.push(read_to_string("data/manual.txt").unwrap()[..5000].chars().collect::<Vec<char>>());
-    for result in BufReader::new(File::open("data/test.txt").unwrap()).lines() {
-        s.push(result.unwrap().chars().collect());
-    }
+    s.push(read_to_string("data/manual.txt").unwrap()[..10000000].chars().collect::<Vec<char>>());
+    // for result in BufReader::new(File::open("data/test.txt").unwrap()).lines() {
+    //     s.push(result.unwrap().chars().collect());
+    // }
 //    println!("{:?}", s);
+    s.push("abcba".chars().collect());
+    s.push("abbac".chars().collect());
     
     let tries = Trie::new(s);
 //    println!("{:?}", tries.alphabet);
@@ -34,7 +36,7 @@ fn main(){
     let mut state_table: HashMap<usize, usize> = HashMap::new();
 
     let mut state_index = 0;
-    let mut bv = BitVec::from_elem(50000000000, false);
+    let mut bv = BitVec::from_elem(min(100000000000, 512*(hc.code_info.len()*fa.states.len())), false);
 
     // convert to binary
     for i in fa.order.iter() {
@@ -62,7 +64,7 @@ fn main(){
                                 max_index = max(max_index, state_table[j.1]);
                             }
                             let width = decide_bits(max_index);
-//                            print!(" width {:?} ", width);
+                        //    print!(" width {:?} ", width);
                             for ii in (0..3).rev() {
                                 if 1 << ii & width.1 != 0 {
                                     bv.set(state_index, true);
@@ -72,7 +74,7 @@ fn main(){
                                 state_index+=1;
                             }
                             for j in x.iter() {
-//                                print!("{:?} {}", j, state_table[j.1]);
+                            //    print!("{:?} {}", j, state_table[j.1]);
                                 for ii in (0..width.0).rev() {
                                     if 1 << ii & state_table[j.1] != 0 {
                                         bv.set(state_index, true);
@@ -86,10 +88,10 @@ fn main(){
                     }
                 }
             }
-//            println!("");
+        //    println!("");
         }
     }
-//    println!("owa {}", state_table.len());
+    // println!("owa {}", state_table.len());
 //    println!("{:?}", fa.trans);
     let init = state_index.clone();
     match fa.trans.get(&0) {
@@ -99,7 +101,6 @@ fn main(){
                 max_index = max(max_index, state_table[j.1]);
             }
             let width = decide_bits(max_index);
-            print!(" width {:?} ", width);
             for ii in (0..3).rev() {
                 if 1 << ii & width.1 != 0 {
                     bv.set(state_index, true);
@@ -109,7 +110,6 @@ fn main(){
                 state_index+=1;
             }
             for j in x.iter() {
-                print!("{:?} {}", j, state_table[j.1]);
                 for ii in (0..width.0).rev() {
                     if 1 << ii & state_table[j.1] != 0 {
                         bv.set(state_index, true);
@@ -123,10 +123,11 @@ fn main(){
         }, None => {}
     }
 
-//    println!("{} {}", state_index, init);
+    println!("index created");
+    println!("Bits used {} of {}", state_index, min(100000000000, 512*(hc.code_info.len()*fa.states.len())));
     bv.truncate(state_index);
-    println!("{:?}", bv);
-    println!("{:?}", bv.to_bytes());
+    // println!("{:?}", bv);
+    println!("{:?}", bv.to_bytes().len());
 }
 
 fn count_bits(x: usize) -> usize {
@@ -296,11 +297,14 @@ impl FactorOracle {
         };
 
         let mut fa_trans: HashMap<usize, HashMap<char, usize>> = HashMap::new();
-        let mut fa_trans2: HashMap<usize, HashSet<usize>> = HashMap::new();
+        let mut fa_trans_in: HashMap<usize, HashSet<usize>> = HashMap::new();
+        let mut fa_trans_out: HashMap<usize, HashSet<usize>> = HashMap::new();
         let mut occurence: HashMap<char, i64> = HashMap::new();
+        let mut state_table: HashMap<usize, usize> = HashMap::new();
 
         let mut i = 0;
         while fa_states.len() > i {
+println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
             'outer: for t in tries.alphabet.iter() {
                 let mut tmp = Vec::new();
                 let mut tmp_pos = HashSet::new();
@@ -319,8 +323,8 @@ impl FactorOracle {
                     let counter = occurence.entry(*t).or_insert(0);
                     *counter += 1;
                     tmp.sort();
-                    'inner: for u in 0..fa_states.len() {
-                        if tmp[0] == fa_states[u][0] {
+                    match state_table.get(&tmp[0]) {
+                        Some(&u) => {
                             match fa_trans.get_mut(&i) {
                                 Some (x) => {
                                     x.insert(*t, u);
@@ -331,76 +335,102 @@ impl FactorOracle {
                                     fa_trans.insert(i, h);
                                 }
                             }
-                            match fa_trans2.get_mut(&i) {
+                            match fa_trans_in.get_mut(&u) {
+                                Some (x) => {
+                                    x.insert(i);
+                                },
+                                None => {
+                                    let mut h: HashSet<usize> = HashSet::new();
+                                    h.insert(i);
+                                    fa_trans_in.insert(u, h);
+                                }
+                            }
+                            match fa_trans_out.get_mut(&i) {
                                 Some (x) => {
                                     x.insert(u);
                                 },
                                 None => {
                                     let mut h: HashSet<usize> = HashSet::new();
                                     h.insert(u);
-                                    fa_trans2.insert(i, h);
+                                    fa_trans_out.insert(i, h);
                                 }
                             }
                             continue 'outer;
-                        }
-                    }
-                    match fa_trans.get_mut(&i) {
-                        Some (x) => {
-                            x.insert(*t, fa_states.len());
                         },
                         None => {
-                            let mut h: HashMap<char, usize> = HashMap::new();
-                            h.insert(*t, fa_states.len());
-                            fa_trans.insert(i, h);
+                            match fa_trans.get_mut(&i) {
+                                Some (x) => {
+                                    x.insert(*t, fa_states.len());
+                                },
+                                None => {
+                                    let mut h: HashMap<char, usize> = HashMap::new();
+                                    h.insert(*t, fa_states.len());
+                                    fa_trans.insert(i, h);
+                                }
+                            }
+                            match fa_trans_in.get_mut(&fa_states.len()) {
+                                Some (x) => {
+                                    x.insert(i);
+                                },
+                                None => {
+                                    let mut h: HashSet<usize> = HashSet::new();
+                                    h.insert(i);
+                                    fa_trans_in.insert(fa_states.len(), h);
+                                }
+                            }
+                            match fa_trans_out.get_mut(&i) {
+                                Some (x) => {
+                                    x.insert(fa_states.len());
+                                },
+                                None => {
+                                    let mut h: HashSet<usize> = HashSet::new();
+                                    h.insert(fa_states.len());
+                                    fa_trans_out.insert(i, h);
+                                }
+                            }  
+                            state_table.insert(tmp[0], fa_states.len());
+                            fa_states.push(tmp.clone());
+                            state_set_tree.add(&tmp.into_iter().collect::<HashSet<usize>>(), &tmp_pos);
                         }
                     }
-                    match fa_trans2.get_mut(&i) {
-                        Some (x) => {
-                            x.insert(fa_states.len());
-                        },
-                        None => {
-                            let mut h: HashSet<usize> = HashSet::new();
-                            h.insert(fa_states.len());
-                            fa_trans2.insert(i, h);
-                        }
-                    }
-                    
-                    fa_states.push(tmp.clone());
-                    state_set_tree.add(&tmp.into_iter().collect::<HashSet<usize>>(), &tmp_pos);
                 }
             }
             i+=1;
         }
-        println!("{:?}", fa_trans2.len());
+        // println!("{:?}", fa_states);
+        // println!("IN: {:?}", fa_trans_in);
         for i in 0..fa_states.len() {
-            if fa_trans2.get(&i) == None {
-                fa_trans2.insert(i, HashSet::new());
+            if fa_trans_out.get(&i) == None {
+                fa_trans_out.insert(i, HashSet::new());
             } 
         }
-        println!("{:?}", fa_trans2.len());
+        // println!("OUT: {:?}", fa_trans_out);
 
         let mut a = Vec::new();
         let mut ii = 0;
-        for j in fa_trans2.clone().iter_mut() {
+        for j in fa_trans_out.clone().iter_mut() {
             if j.1.len() == 0 {
                 a.push(*j.0);
-                fa_trans2.remove(j.0);
+                fa_trans_out.remove(j.0);
                 ii += 1;
             }
         }
+        let l = fa_trans_out.len();
         let mut i = 0;
-        while fa_states.len() > i {
-            for j in fa_trans2.clone().iter_mut() {
-                if fa_trans2.entry(*j.0).or_default().remove(&a[i]) && fa_trans2.entry(*j.0).or_default().len() == 0 {
-                    a.push(*j.0);
-                }
+        while fa_trans_out.len() > 0 {
+            match fa_trans_in.get_mut(&a[i]) {
+                Some(x) => {
+                    for j in x.iter() {
+                        if fa_trans_out.entry(*j).or_default().remove(&a[i]) && fa_trans_out.entry(*j).or_default().len() == 0 {
+                            fa_trans_out.remove(j);
+                            a.push(*j);
+                        }
+                    }
+                }, None => {}
             }
             i+=1;
+            println!("{}, {}", i, l);
         }
-        println!("{:?}", fa_states.len());
-        println!("{:?}", fa_trans2.len());
-        println!("{:?}", a.len());
-
 
         FactorOracle {
             states: fa_states,
