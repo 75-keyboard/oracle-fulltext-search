@@ -6,23 +6,12 @@ use std::io::{self, BufRead, BufReader};
 use bit_vec::BitVec;
 
 fn main(){
-    let mut s = Vec::new();
-//    s.push(Bytes::from(&b"abcba"[..]));
-//    s.push(Bytes::from(&b"abbac"[..]));
-    s.push(read_to_string("data/manual.txt").unwrap().chars().collect::<Vec<char>>());
-    // for result in BufReader::new(File::open("data/test.txt").unwrap()).lines() {
-    //     s.push(result.unwrap().chars().collect());
-    // }
-//    println!("{:?}", s);
-    // s.push("abcba".chars().collect());
-    // s.push("abbac".chars().collect());
-    
-    let tries = Trie::new(s);
+    let tries = Trie::new();
 //    println!("{:?}", tries.alphabet);
     println!("created trie--------------------------------");
 
-    let fa = FactorOracle::new(tries);
-//    println!("{:?}", fa.states);
+    let fa = FactorOracle::new();
+    println!("{:?}", fa.states);
     println!("created FO--------------------------------");
 //    println!("{:?}", fa.trans);
 //    println!("{:?}", fa.order);
@@ -38,6 +27,7 @@ fn main(){
     let mut state_index = 0;
     let mut bv = BitVec::from_elem(min(100000000000, 32*(hc.code_info.len()*fa.states.len())), false);
 
+    println!("{:?}", fa.order);
     // convert to binary
     for i in fa.order.iter() {
         for (j, k) in fa.trans[i].iter() {
@@ -45,7 +35,7 @@ fn main(){
             match state_table.get(k) {
                 Some(_) => {},
                 None => {
-//                    print!("{} {}", j, *k);
+                    print!("{} {}", j, *k);
                     state_table.insert(*k, state_index);
                     let trans_code = hc.code_info[j];
                     // 状態に入ってくる記号を入れてる
@@ -64,7 +54,7 @@ fn main(){
                                 max_index = max(max_index, state_table[j.1]);
                             }
                             let width = decide_bits(max_index);
-                        //    print!(" width {:?} ", width);
+                            print!(" width {:?} ", width);
                             for ii in (0..3).rev() {
                                 if 1 << ii & width.1 != 0 {
                                     bv.set(state_index, true);
@@ -74,7 +64,7 @@ fn main(){
                                 state_index+=1;
                             }
                             for j in x.iter() {
-                            //    print!("{:?} {}", j, state_table[j.1]);
+                                print!("{:?} {}", j, state_table[j.1]);
                                 for ii in (0..width.0).rev() {
                                     if 1 << ii & state_table[j.1] != 0 {
                                         bv.set(state_index, true);
@@ -88,7 +78,7 @@ fn main(){
                     }
                 }
             }
-        //    println!("");
+            println!("");
         }
     }
     // println!("owa {}", state_table.len());
@@ -96,12 +86,13 @@ fn main(){
     let init = state_index.clone();
     match fa.trans.get(&0) {
         Some(x) => {
+            print!("{:?}", x);
             let mut max_index = 0;
             for j in x.iter() {
                 max_index = max(max_index, state_table[j.1]);
             }
             let width = decide_bits(max_index);
-            // print!(" width {:?} ", width);
+            print!(" width {:?} ", width);
             for ii in (0..3).rev() {
                 if 1 << ii & width.1 != 0 {
                     bv.set(state_index, true);
@@ -111,7 +102,7 @@ fn main(){
                 state_index+=1;
             }
             for j in x.iter() {
-                // print!("{:?} {}", j, state_table[j.1]);
+                print!("{:?} {}", j, state_table[j.1]);
                 for ii in (0..width.0).rev() {
                     if 1 << ii & state_table[j.1] != 0 {
                         bv.set(state_index, true);
@@ -128,7 +119,7 @@ fn main(){
     println!("index created");
     println!("Bits used {} of {}", state_index, min(100000000000, 512*(hc.code_info.len()*fa.states.len())));
     bv.truncate(state_index);
-    // println!("{:?}", bv);
+    println!("{:?}", bv);
     println!("{:?}", bv.to_bytes().len());
 }
 
@@ -281,7 +272,8 @@ struct FactorOracle {
 }
 
 impl FactorOracle {
-    pub fn new(tries: Trie) -> FactorOracle {
+    fn create() -> (FactorOracle, HashMap<usize, HashSet<usize>>, HashMap<usize, HashSet<usize>>) {
+        let mut tries = Trie::new();
         let mut fa_states: Vec<Vec<usize>> = Vec::new();
         fa_states.push((0..tries.trans.len()).collect());
     //    let mut initial_pos: HashSet<(usize, usize)> = HashSet::new();
@@ -408,12 +400,23 @@ println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
             } 
         }
         // println!("OUT: {:?}", fa_trans_out);
-
-        let mut a = Vec::new();
+        (
+            FactorOracle {
+                states: fa_states,
+                trans: fa_trans,
+                state_set_tree: state_set_tree,
+                occurence: occurence,
+                order: Vec::new(),
+            }, fa_trans_in, fa_trans_out
+        )
+        
+    } 
+    pub fn new() -> FactorOracle {
+        let (mut fo, mut fa_trans_in, mut fa_trans_out) = FactorOracle::create();
         let mut ii = 0;
         for j in fa_trans_out.clone().iter_mut() {
             if j.1.len() == 0 {
-                a.push(*j.0);
+                fo.order.push(*j.0);
                 fa_trans_out.remove(j.0);
                 ii += 1;
             }
@@ -421,12 +424,12 @@ println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
         let l = fa_trans_out.len();
         let mut i = 0;
         while fa_trans_out.len() > 0 {
-            match fa_trans_in.get_mut(&a[i]) {
+            match fa_trans_in.get_mut(&fo.order[i]) {
                 Some(x) => {
                     for j in x.iter() {
-                        if fa_trans_out.entry(*j).or_default().remove(&a[i]) && fa_trans_out.entry(*j).or_default().len() == 0 {
+                        if fa_trans_out.entry(*j).or_default().remove(&fo.order[i]) && fa_trans_out.entry(*j).or_default().len() == 0 {
                             fa_trans_out.remove(j);
-                            a.push(*j);
+                            fo.order.push(*j);
                         }
                     }
                 }, None => {}
@@ -434,14 +437,8 @@ println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
             i+=1;
             println!("{}, {}", i, l);
         }
-
-        FactorOracle {
-            states: fa_states,
-            trans: fa_trans,
-            state_set_tree: state_set_tree,
-            occurence: occurence,
-            order: a[ii..].to_vec(),
-        }
+        fo.order = fo.order[ii..].to_vec();
+        fo
     }
 }
 
@@ -452,7 +449,18 @@ struct Trie {
 }
 
 impl Trie {
-    pub fn new(s: Vec<Vec<char>>) -> Trie {
+    pub fn new() -> Trie {
+        let mut s: Vec<Vec<char>> = Vec::new();
+    //    s.push(Bytes::from(&b"abcba"[..]));
+    //    s.push(Bytes::from(&b"abbac"[..]));
+        s.push(read_to_string("data/manual.txt").unwrap().chars().collect::<Vec<char>>());
+        // for result in BufReader::new(File::open("data/test.txt").unwrap()).lines() {
+        //     s.push(result.unwrap().chars().collect());
+        // }
+    //    println!("{:?}", s);
+        //s.push("abcba".chars().collect());
+        //s.push("abbac".chars().collect());
+    
         let mut trie_trans = HashMap::new();
         let mut trie_alphabet = HashSet::new();
         let mut last = 0;
