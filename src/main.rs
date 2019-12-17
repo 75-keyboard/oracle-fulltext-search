@@ -6,10 +6,12 @@ use std::io::{self, BufRead, BufReader};
 use bit_vec::BitVec;
 
 fn main(){
+    // 入力の文字列からトライ木を構築
     let tries = Trie::new();
 //    println!("{:?}", tries.alphabet);
     println!("created trie--------------------------------");
 
+    // トライ木からファクターオラクルを構築
     let fa = FactorOracle::new();
     println!("{:?}", fa.states);
     println!("created FO--------------------------------");
@@ -20,6 +22,8 @@ fn main(){
     //let mut searchable: HashSet<usize> = HashSet::new();
     //searchable.insert(6);
     //println!("{:?}", fa.state_set_tree.search(&searchable));
+
+    // ファクターオラクルの遷移のラベルの出現頻度からハフマン符号を構成
     let hc = HuffmanCode::new(fa.occurence);
     hc.print_code_info();
     let mut state_table: HashMap<usize, usize> = HashMap::new();
@@ -28,7 +32,7 @@ fn main(){
     let mut bv = BitVec::from_elem(min(100000000000, 32*(hc.code_info.len()*fa.states.len())), false);
 
     println!("{:?}", fa.order);
-    // convert to binary
+    // ビット列に変換
     for i in fa.order.iter() {
         for (j, k) in fa.trans[i].iter() {
 //            println!("{:?}", i);
@@ -123,6 +127,9 @@ fn main(){
     println!("{:?}", bv.to_bytes().len());
 }
 
+/**
+ * 引数のビット数を計算
+ */
 fn count_bits(x: usize) -> usize {
     let mut i = 0;
     while x >> i > 0 {
@@ -131,6 +138,9 @@ fn count_bits(x: usize) -> usize {
     i
 }
 
+/**
+ * 遷移のビット数を決定する
+ */
 fn decide_bits(x: usize) -> (usize, usize) {
     let mut i = 4;
     let mut cnt = 0;
@@ -142,11 +152,18 @@ fn decide_bits(x: usize) -> (usize, usize) {
     (i, cnt)
 }
 
+
+/**
+ * ハフマン符号
+ */
 struct HuffmanCode {
     code_info: HashMap<char, (usize, usize)>
 }
 
 impl HuffmanCode {
+    /**
+     * ハフマン木を構成し、ハフマン符号にする
+     */
     pub fn new(data: HashMap<char, i64>) -> HuffmanCode {
         let mut queue: BinaryHeap<TreeNode> = BinaryHeap::new();
         for (key, val) in data.iter() {
@@ -162,28 +179,37 @@ impl HuffmanCode {
         }
         let root: TreeNode = queue.pop().unwrap();
         let mut code_info: HashMap<char, (usize, usize)> = HashMap::new();
-        dfs(&mut code_info, &root, 0, 0);
+        HuffmanCode::dfs(&mut code_info, &root, 0, 0);
         HuffmanCode {
             code_info: code_info
         }
     }
 
+    /**
+     * 符号情報を出力
+     */
     fn print_code_info(&self) {
         for (k, v) in self.code_info.iter() {
             println!("{}: {:0b} {}", k, v.0, v.1);
         }
     }
-}
 
-fn dfs(code_info: &mut HashMap<char, (usize, usize)>, node: &TreeNode, code: usize, code_size: usize) {
-    if !node.childs.is_empty() {
-        dfs(code_info, &node.childs[0], code << 1, code_size+1);
-        dfs(code_info, &node.childs[1], (code << 1) + 1, code_size+1);
-    } else {
-        code_info.insert(node.value, (code, code_size));
+    /**
+     * ハフマン木をたどる
+     */
+    fn dfs(code_info: &mut HashMap<char, (usize, usize)>, node: &TreeNode, code: usize, code_size: usize) {
+        if !node.childs.is_empty() {
+            HuffmanCode::dfs(code_info, &node.childs[0], code << 1, code_size+1);
+            HuffmanCode::dfs(code_info, &node.childs[1], (code << 1) + 1, code_size+1);
+        } else {
+            code_info.insert(node.value, (code, code_size));
+        }
     }
 }
 
+/**
+ * ハフマン木の各ノード 頻度による大小関係をderive
+ */
 #[derive(Eq)]
 struct TreeNode {
     value: char,
@@ -219,6 +245,9 @@ impl PartialEq for TreeNode {
     }
 }
 
+/**
+ * 状態集合木
+ */
 struct State {
     childs: Vec<State>,
     set: HashSet<usize>,
@@ -226,6 +255,9 @@ struct State {
 }
 
 impl State {
+    /**
+     * ノードを追加
+     */
     fn add(&mut self, set: &HashSet<usize>, set_pos: &HashSet<(usize, usize)>) {
         for child in self.childs.iter_mut() {
             if child.set.is_superset(&set) {
@@ -243,6 +275,9 @@ impl State {
         });
     }
 
+    /**
+     * ノードの検索
+     */
     fn search(&mut self, set: &HashSet<usize>) -> HashSet<(usize, usize)> {
         for child in self.childs.iter_mut() {
             if child.set.clone() == set.clone() {
@@ -254,6 +289,9 @@ impl State {
         return self.position.clone();
     }
 
+    /**
+     * 出力
+     */
     fn print(&self, i: usize) {
         println!("{}: {:?} {:?}", i, self.set, self.position);
         for child in self.childs.iter() {
@@ -263,6 +301,9 @@ impl State {
     }
 }
 
+/**
+ * ファクターオラクル
+ */
 struct FactorOracle {
     states: Vec<Vec<usize>>,
     trans: HashMap<usize, HashMap<char, usize>>,
@@ -272,6 +313,9 @@ struct FactorOracle {
 }
 
 impl FactorOracle {
+    /**
+     * 部分集合構成法により、トライ木からファクターオラクルを構築
+     */
     fn create() -> (FactorOracle, HashMap<usize, HashSet<usize>>, HashMap<usize, HashSet<usize>>) {
         let mut tries = Trie::new();
         let mut fa_states: Vec<Vec<usize>> = Vec::new();
@@ -411,6 +455,10 @@ println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
         )
         
     } 
+
+    /**
+     * ファクターオラクルを構成し、ビット列にするために逆順のトポロジカルオーダーを記録
+     */
     pub fn new() -> FactorOracle {
         let (mut fo, mut fa_trans_in, mut fa_trans_out) = FactorOracle::create();
         let mut ii = 0;
@@ -442,6 +490,9 @@ println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
     }
 }
 
+/**
+ * トライ木
+ */
 struct Trie {
     alphabet: Vec<char>,
     trans: HashMap<(usize, char), usize>,
@@ -449,8 +500,11 @@ struct Trie {
 }
 
 impl Trie {
+    /**
+     * 文字列からトライ木を構築
+     */
     pub fn new() -> Trie {
-        let mut s: Vec<Vec<char>> = Vec::new();
+
     //    s.push(Bytes::from(&b"abcba"[..]));
     //    s.push(Bytes::from(&b"abbac"[..]));
         s.push(read_to_string("data/manual.txt").unwrap().chars().collect::<Vec<char>>());
