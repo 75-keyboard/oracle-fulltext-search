@@ -20,8 +20,8 @@ fn main(){
 
     // ファクターオラクルの遷移のラベルの出現頻度からハフマン符号を構成
     let fa = FactorOracleOnline::new();
-    println!("{:?}", fa);
-    println!("{:?}", create_index(fa));
+    //println!("{:?}", fa);
+    create_index(fa);
 }
 
 fn create_index(fa: FactorOracleOnline) {
@@ -34,9 +34,9 @@ fn create_index(fa: FactorOracleOnline) {
 
     // ビット列に変換
     for i in (0..fa.state_num).rev() {
-        println!("{}", i);
-        println!("{:?}", fa.trans[i]);
-        println!("{:?}", state_table);
+        //println!("{}", i);
+        //println!("{:?}", fa.trans[i]);
+        //println!("{:?}", state_table);
         for (j, k) in fa.trans[i].iter() {
 //            println!("{:?}", i);
             match state_table.get(k) {
@@ -54,13 +54,14 @@ fn create_index(fa: FactorOracleOnline) {
                         state_index+=1;
                     }
                     match fa.trans.get(*k) {
-                        Some(x) => {
+                        Some(x) if x.len() != 0 => {
+                            println!("{:?}", x);
                             let mut max_index = 0;
                             for j in x.iter() {
                                 max_index = max(max_index, state_table[j.1]);
                             }
                             let width = decide_bits(max_index);
-                            print!(" width {:?} ", width);
+                            //print!(" width {:?} ", width);
                             for ii in (0..3).rev() {
                                 if 1 << ii & width.1 != 0 {
                                     bv.set(state_index, true);
@@ -70,7 +71,7 @@ fn create_index(fa: FactorOracleOnline) {
                                 state_index+=1;
                             }
                             for j in x.iter() {
-                                print!("{:?} {}", j, state_table[j.1]);
+                                //print!("{:?} {}", j, state_table[j.1]);
                                 for ii in (0..width.0).rev() {
                                     if 1 << ii & state_table[j.1] != 0 {
                                         bv.set(state_index, true);
@@ -80,11 +81,11 @@ fn create_index(fa: FactorOracleOnline) {
                                     state_index+=1;
                                 }
                             }
-                        }, None => {}
+                        }, _ => {}
                     }
                 }
             }
-            println!("");
+            //println!("");
         }
     }
     // println!("owa {}", state_table.len());
@@ -92,13 +93,13 @@ fn create_index(fa: FactorOracleOnline) {
     let init = state_index.clone();
     match fa.trans.get(0) {
         Some(x) => {
-            print!("{:?}", x);
+            //print!("{:?}", x);
             let mut max_index = 0;
             for j in x.iter() {
                 max_index = max(max_index, state_table[j.1]);
             }
             let width = decide_bits(max_index);
-            print!(" width {:?} ", width);
+            //print!(" width {:?} ", width);
             for ii in (0..3).rev() {
                 if 1 << ii & width.1 != 0 {
                     bv.set(state_index, true);
@@ -108,7 +109,7 @@ fn create_index(fa: FactorOracleOnline) {
                 state_index+=1;
             }
             for j in x.iter() {
-                print!("{:?} {}", j, state_table[j.1]);
+                //print!("{:?} {}", j, state_table[j.1]);
                 for ii in (0..width.0).rev() {
                     if 1 << ii & state_table[j.1] != 0 {
                         bv.set(state_index, true);
@@ -118,15 +119,15 @@ fn create_index(fa: FactorOracleOnline) {
                     state_index+=1;
                 }
             }
-            println!("");
+            //println!("");
         }, None => {}
     }
 
     println!("index created");
-    println!("Bits used {} of {}", state_index, min(100000000000, 512*(hc.code_info.len()*fa.state_num)));
     bv.truncate(state_index);
     println!("{:?}", bv);
     println!("{:?}", bv.to_bytes().len());
+    println!("Bits used {} of {}", state_index, min(100000000000, 512*(hc.code_info.len()*fa.state_num)));
 }
 
 /**
@@ -247,62 +248,6 @@ impl PartialEq for TreeNode {
     }
 }
 
-/**
- * 状態集合木
- */
-struct State {
-    childs: Vec<State>,
-    set: HashSet<usize>,
-    position: HashSet<(usize, usize)>
-}
-
-impl State {
-    /**
-     * ノードを追加
-     */
-    fn add(&mut self, set: &HashSet<usize>, set_pos: &HashSet<(usize, usize)>) {
-        for child in self.childs.iter_mut() {
-            if child.set.is_superset(&set) {
-                for i in set_pos {
-                    child.position.remove(i);
-                }
-                child.add(&set, &set_pos);
-                return;
-            }
-        }
-        self.childs.push(State {
-            childs: Vec::new(),
-            set: set.clone(),
-            position: set_pos.clone()
-        });
-    }
-
-    /**
-     * ノードの検索
-     */
-    fn search(&mut self, set: &HashSet<usize>) -> HashSet<(usize, usize)> {
-        for child in self.childs.iter_mut() {
-            if child.set.clone() == set.clone() {
-                return child.position.clone();
-            } else if child.set.is_superset(&set) {
-                return child.search(&set);
-            }
-        }
-        return self.position.clone();
-    }
-
-    /**
-     * 出力
-     */
-    fn print(&self, i: usize) {
-        println!("{}: {:?} {:?}", i, self.set, self.position);
-        for child in self.childs.iter() {
-            child.print(i+1);
-        }
-        
-    }
-}
-
 #[derive(Debug)]
 struct FactorOracleOnline {
     state_num: usize,
@@ -323,7 +268,7 @@ impl FactorOracleOnline {
         let l = p.len();
 
         for i in 0..l {
-            println!("{} / {}", i, l);
+            //println!("{} / {}", i, l);
             oracle.add_letter(p[i].clone());
         }
 
@@ -376,228 +321,3 @@ impl FactorOracleOnline {
         }
     }
 }
-/**
- * ファクターオラクル
- */
-struct FactorOracle {
-    states: Vec<Vec<usize>>,
-    trans: HashMap<usize, HashMap<char, usize>>,
-    state_set_tree: State,
-    occurence: HashMap<char, i64>,
-    order: Vec<usize>,
-}
-
-impl FactorOracle {
-    /**
-     * 部分集合構成法により、トライ木からファクターオラクルを構成し、ビット列にするために逆順のトポロジカルオーダーを記録
-     */
-    pub fn new() -> FactorOracle {
-        let mut tries = Trie::new();
-        println!("{:?}", tries);
-        let mut fa_states: Vec<Vec<usize>> = Vec::new();
-        fa_states.push((0..tries.trans.len()).collect());
-    //    let mut initial_pos: HashSet<(usize, usize)> = HashSet::new();
-    //    for i in dist.iter() {
-    //        for j in i {
-    //            println!("{:?}", j);
-    //            initial_pos.insert(*j);
-    //        }
-    //    }
-        let mut state_set_tree = State {
-            set: (0..tries.trans.len()).collect::<HashSet<usize>>(),
-            childs: Vec::new(),
-            position: HashSet::new()
-    //        position: initial_pos
-        };
-
-        let mut fa_trans: HashMap<usize, HashMap<char, usize>> = HashMap::new();
-        let mut fa_trans_in: HashMap<usize, HashSet<usize>> = HashMap::new();
-        let mut fa_trans_out: HashMap<usize, HashSet<usize>> = HashMap::new();
-        let mut occurence: HashMap<char, i64> = HashMap::new();
-        let mut state_table: HashMap<usize, usize> = HashMap::new();
-
-        let mut state_order: HashMap<usize, usize> = HashMap::new();
-
-        let mut i = 0;
-        let mut j = 0;
-        while fa_states.len() > i {
-println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
-            'outer: for t in tries.alphabet.iter() {
-                let mut tmp: Vec<usize> = Vec::new();
-                let mut tmp_pos: HashSet<(usize, usize)> = HashSet::new();
-                for s in fa_states[i].iter() {
-                    match tries.trans.get(&(*s, *t)) {
-                        Some(x) => {
-                            tmp.push(*x);
-                        }, None => {}
-                    }
-                }
-                if tmp.len() > 0 {
-                    let counter = occurence.entry(*t).or_insert(0);
-                    *counter += 1;
-                    tmp.sort();
-                    match state_table.get(&tmp[0]) {
-                        Some(&u) => {
-                            state_order.insert(u, j);
-                            j+=1;
-                            match fa_trans.get_mut(&i) {
-                                Some (x) => {
-                                    x.insert(*t, u);
-                                },
-                                None => {
-                                    let mut h: HashMap<char, usize> = HashMap::new();
-                                    h.insert(*t, u);
-                                    fa_trans.insert(i, h);
-                                }
-                            }
-                            match fa_trans_in.get_mut(&u) {
-                                Some (x) => {
-                                    x.insert(i);
-                                },
-                                None => {
-                                    let mut h: HashSet<usize> = HashSet::new();
-                                    h.insert(i);
-                                    fa_trans_in.insert(u, h);
-                                }
-                            }
-                            match fa_trans_out.get_mut(&i) {
-                                Some (x) => {
-                                    x.insert(u);
-                                },
-                                None => {
-                                    let mut h: HashSet<usize> = HashSet::new();
-                                    h.insert(u);
-                                    fa_trans_out.insert(i, h);
-                                }
-                            }
-                            continue 'outer;
-                        },
-                        None => {
-                            for i in tmp.clone().iter() {
-                                for j in tries.position[*i-1].iter() {
-                                    tmp_pos.insert(*j);
-                                }
-                            }
-                            state_order.insert(fa_states.len(), j);
-                            j+=1;
-
-                            match fa_trans.get_mut(&i) {
-                                Some (x) => {
-                                    x.insert(*t, fa_states.len());
-                                },
-                                None => {
-                                    let mut h: HashMap<char, usize> = HashMap::new();
-                                    h.insert(*t, fa_states.len());
-                                    fa_trans.insert(i, h);
-                                }
-                            }
-                            match fa_trans_in.get_mut(&fa_states.len()) {
-                                Some (x) => {
-                                    x.insert(i);
-                                },
-                                None => {
-                                    let mut h: HashSet<usize> = HashSet::new();
-                                    h.insert(i);
-                                    fa_trans_in.insert(fa_states.len(), h);
-                                }
-                            }
-                            match fa_trans_out.get_mut(&i) {
-                                Some (x) => {
-                                    x.insert(fa_states.len());
-                                },
-                                None => {
-                                    let mut h: HashSet<usize> = HashSet::new();
-                                    h.insert(fa_states.len());
-                                    fa_trans_out.insert(i, h);
-                                }
-                            }  
-                            state_table.insert(tmp[0], fa_states.len());
-                            fa_states.push(tmp.clone());
-                            state_set_tree.add(&tmp.into_iter().collect::<HashSet<usize>>(), &tmp_pos);
-                        }
-                    }
-                }
-            }
-            i+=1;
-        }
-        let mut top_char = state_order.iter().map(|(a, b)| (*a, *b as i64)).collect::<Vec<(usize, i64)>>();
-        top_char.sort_by(|a, b| a.1.cmp(&(b.1)));
-        top_char.reverse();
-        println!("a {:?}", top_char.iter().map(|(a, _)| *a).collect::<Vec<usize>>());
-        // println!("{:?}", fa_states);
-        // println!("IN: {:?}", fa_trans_in);
-        for i in 0..fa_states.len() {
-            if fa_trans_out.get(&i) == None {
-                fa_trans_out.insert(i, HashSet::new());
-            } 
-        }
-        // println!("OUT: {:?}", fa_trans_out);
-        FactorOracle {
-            states: fa_states,
-            trans: fa_trans,
-            state_set_tree: state_set_tree,
-            occurence: occurence,
-            order: Vec::new(),
-        }
-    } 
-}
-
-/**
- * トライ木
- */
-#[derive(Debug)]
-struct Trie {
-    alphabet: Vec<char>,
-    trans: HashMap<(usize, char), usize>,
-    position: Vec<Vec<(usize, usize)>>
-}
-
-impl Trie {
-    /**
-     * 文字列からトライ木を構築
-     */
-    pub fn new() -> Trie {
-        let mut s: Vec<Vec<char>> = Vec::new();
-    //    s.push(Bytes::from(&b"abcba"[..]));
-    //    s.push(Bytes::from(&b"abbac"[..]));
-    //    s.push(read_to_string("data/test1.txt").unwrap().chars().collect::<Vec<char>>());
-        // for result in BufReader::new(File::open("data/test.txt").unwrap()).lines() {
-        //     s.push(result.unwrap().chars().collect());
-        // }
-    //    println!("{:?}", s);
-        s.push("abbbaab".chars().collect());
-    
-        let mut trie_trans = HashMap::new();
-        let mut trie_alphabet = HashSet::new();
-        let mut last = 0;
-        let mut dist: Vec<Vec<(usize, usize)>> = Vec::new();
-        for i in 0..s.len() {
-            let mut crt = 0;
-            for j in 0..s[i].len() {
-                trie_alphabet.insert(s[i][j]);
-                match trie_trans.get(&(crt, s[i][j])) {
-                    Some(x) => {
-                        crt=*x;
-                        dist[crt-1].push((i, j));
-                    },
-                    None => {
-                        dist.push(Vec::new());
-                        dist[last].push((i, j));
-                        last+=1;
-                        trie_trans.insert((crt, s[i][j]), last);
-                        crt=last;
-                    }
-                }
-            }
-        }
-        let mut trie_alphabet = trie_alphabet.into_iter().collect::<Vec<char>>();
-        trie_alphabet.sort();
-
-        Trie {
-            alphabet: trie_alphabet,
-            trans: trie_trans,
-            position: dist
-        }
-    }
-}
-
