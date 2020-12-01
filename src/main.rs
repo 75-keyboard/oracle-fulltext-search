@@ -1,4 +1,4 @@
-use std::collections::{ HashMap, HashSet, BinaryHeap };
+use std::collections::{ BTreeMap, HashMap, HashSet, BinaryHeap };
 use std::cmp::{ Ordering, max, min };
 use std::fs::read_to_string;
 use std::fs::File;
@@ -20,8 +20,10 @@ fn main(){
 
     // ファクターオラクルの遷移のラベルの出現頻度からハフマン符号を構成
     let fa = FactorOracleOnline::new();
-    //println!("{:?}", fa);
-    create_index(fa);
+
+    //println!("{:?}", fa.search("abbac".to_string()));
+    println!("{:?}", fa.search("aa".to_string()));
+    //create_index(fa);
 }
 
 fn create_index(fa: FactorOracleOnline) {
@@ -248,12 +250,113 @@ impl PartialEq for TreeNode {
     }
 }
 
+/**
+ * トライ木
+ */
+struct Trie {
+    alphabet: Vec<char>,
+    trans: BTreeMap<(usize, char), usize>,
+    position: Vec<Vec<(usize, usize)>>,
+    txt: Vec<Vec<char>>,
+}
+
+impl Trie {
+    /**
+     * 文字列からトライ木を構築
+     */
+    pub fn new() -> Trie {
+        let mut s: Vec<Vec<char>> = Vec::new();
+        //for i in 0..100 {
+        //    s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+        //}
+        //s.push(read_to_string("data/manual.txt").unwrap().chars().collect::<Vec<char>>());
+        // for result in BufReader::new(File::open("data/test.txt").unwrap()).lines() {
+        //     s.push(result.unwrap().chars().collect());
+        // }
+    //    println!("{:?}", s);
+        s.push("abbac".chars().collect());
+        s.push("aaaac".chars().collect());
+    
+        let mut trie_trans = BTreeMap::new();
+        let mut reverse_trans: BTreeMap<usize, (char, usize)> = BTreeMap::new();
+        let mut trie_alphabet = HashSet::new();
+        let mut finals = Vec::new();
+        let mut last = 0;
+        let mut dist: Vec<Vec<(usize, usize)>> = Vec::new();
+        dist.push(Vec::new());
+        for i in 0..s.len() {
+            dist[i].push((i, 0));
+            let mut crt = 0;
+            for j in 0..s[i].len() {
+                trie_alphabet.insert(s[i][j]);
+                match trie_trans.get(&(crt, s[i][j])) {
+                    Some(x) => {
+                        crt=*x;
+                        dist[crt-1].push((i, j+1));
+                        if j == s[i].len()-1 { finals.push(crt-1) }
+                    },
+                    None => {
+                        dist.push(Vec::new());
+                        dist[last+1].push((i, j+1));
+                        last+=1;
+                        trie_trans.insert((crt, s[i][j]), last);
+                        reverse_trans.insert(last, (s[i][j], crt));
+                        crt=last;
+                        if j == s[i].len()-1 { finals.push(crt) }
+                    }
+                }
+            }
+        }
+
+        //println!("finals {:?}", finals);
+        //let mut next = finals.clone();
+        //let fisrt = next[0].clone();
+        //let mut mm: Vec<HashMap<char, Vec<usize>>> = Vec::new();
+        //'a: while true {
+        //    let mut hm: HashMap<char, Vec<usize>> = HashMap::new();
+        //    for i in 0..next.len() {
+        //        println!("aa {:?}", next);
+        //        match reverse_trans.get(&next[i]) {
+        //            Some(x) => { 
+        //                next[i]=x.1; 
+        //                match hm.get_mut(&x.0) {
+        //                    Some(y) => {
+        //                        y.push(x.1);
+        //                    },
+        //                    None => {
+        //                        hm.insert(x.0, vec![x.1]);
+        //                    }
+        //                }          
+        //            }, None => { break 'a; }
+        //        };
+        //    }
+        //    mm.push(hm);
+        //}
+        //println!("{:?}", mm);
+
+        let mut trie_alphabet = trie_alphabet.into_iter().collect::<Vec<char>>();
+        trie_alphabet.sort();
+
+        Trie {
+            alphabet: trie_alphabet,
+            trans: trie_trans,
+            position: dist,
+            txt: s,
+        }
+    }
+}
+
 #[derive(Debug)]
 struct FactorOracleOnline {
     state_num: usize,
     trans: Vec<HashMap<char, usize>>,
     supply_function: Vec<usize>,
-    occurence: HashMap<char, i64>
+    suffix_link_tree: Vec<Vec<usize>>,
+    searching_info: (Vec<usize>, Vec<usize>),
+    sp_inverse: Vec<(usize, usize)>,
+    position: Vec<Vec<(usize, usize)>>,
+    occurence: HashMap<char, i64>,
+    txt: Vec<Vec<char>>,
 }
 
 impl FactorOracleOnline {
@@ -261,63 +364,163 @@ impl FactorOracleOnline {
      * Allauzenのオンラインファクターオラクル構成法
      */
     pub fn new() -> FactorOracleOnline {
-        let p :Vec<char> = "abbbaab".chars().collect();
-        //let p :Vec<char> = read_to_string("data/test.txt").unwrap().chars().collect::<Vec<char>>();
+        //let p :Vec<char> = "abbbaab".chars().collect();
+        let trie = Trie::new();
 
-        let mut oracle = FactorOracleOnline::init();
-        let l = p.len();
+        let mut oracle = FactorOracleOnline::init(trie.trans.len()+1, trie.position, trie.txt);
 
-        for i in 0..l {
-            //println!("{} / {}", i, l);
-            oracle.add_letter(p[i].clone());
+        for ((src, sigma), dst) in trie.trans {
+            //println!("{} {} {}", src, sigma, dst);
+            oracle.add_state(src, sigma, dst);
         }
 
+        oracle.organize_seaching_info();
+
+        println!("{:?}", oracle);
         oracle
+    }
+
+    fn organize_seaching_info(&mut self) {
+        let searching_info = self.re_order(0, Vec::new(), vec![0; self.supply_function.len()], vec![(0, 0); self.supply_function.len()]);
+
+
+        self.searching_info = (searching_info.0, searching_info.1);
+        self.sp_inverse = searching_info.2;
     }
 
     /**
      * 初期化
      */
-    fn init() -> FactorOracleOnline {
-        let mut supply_function :Vec<usize> = Vec::new();
-        supply_function.push(1_000_000_000_000);        
+    fn init(len: usize, position: Vec<Vec<(usize, usize)>>, txt: Vec<Vec<char>>) -> FactorOracleOnline {
+        let mut supply_function :Vec<usize> = vec![0; len];
+        supply_function[0] = 1_000_000_000_000;      
         let mut trans: Vec<HashMap<char, usize>>= Vec::new();
         trans.push(HashMap::new());
         FactorOracleOnline { 
             state_num: 0,
             trans: trans,
             supply_function,
-            occurence: HashMap::new()
+            suffix_link_tree: vec![Vec::new(); len],
+            searching_info: (Vec::new(), Vec::new()),
+            sp_inverse: Vec::new(),
+            position: position,
+            occurence: HashMap::new(),
+            txt: txt,
         }
     }
 
     /**
      * 1文字追加関数
      */
-    fn add_letter(&mut self, sigma: char) {
-        let i = self.state_num.clone();
+    fn add_state(&mut self, src: usize, sigma: char, dst: usize) {
+        let q = src.clone();
+        let i = dst.clone();
         self.state_num += 1;
         self.trans.push(HashMap::new());
-        self.trans[i].insert(sigma, i+1);
+        self.trans[q].insert(sigma, i);
 
         let counter = self.occurence.entry(sigma).or_insert(0);
         *counter += 1;
 
-        let mut k = self.supply_function[i];
+        let mut k = self.supply_function[q];
         
         while k != 1_000_000_000_000 {
             if let Some(_) = self.trans[k].get(&sigma) { break }
-            self.trans[k].insert(sigma, i+1);
+            self.trans[k].insert(sigma, i);
             *counter += 1;
             k = self.supply_function[k];
         }
 
         if k == 1_000_000_000_000 { 
-            self.supply_function.push(0);
+            self.supply_function[i] = 0;
+            self.suffix_link_tree[0].push(i);
         } else {
-            if let Some(x) = self.trans[k].get(&sigma) { 
-                self.supply_function.push(x.clone());
+            if let Some(&x) = self.trans[k].get(&sigma) { 
+                self.supply_function[i] = x.clone();
+                self.suffix_link_tree[x].push(i);
             }
         }
+
+    }
+
+    fn re_order(&self, idx: usize, mut x: Vec<usize>, mut y: Vec<usize>, mut z: Vec<(usize, usize)>) -> (Vec<usize>, Vec<usize>, Vec<(usize, usize)>) {
+        //println!("{} {}", idx, x.len());
+        let a= x.len();
+        y[idx] = x.len();
+        x.push(idx);
+        for i in &self.suffix_link_tree[idx] {
+            let xy = self.re_order(*i, x, y, z);
+            x = xy.0; y = xy.1; z = xy.2;
+        }
+        z[a] = (a, x.len()-1);
+        (x, y, z)
+    }
+
+    fn search(&self, w: String) -> Vec<(usize, usize)> {
+        let mut endpos: Vec<(usize, usize)> = Vec::new();
+        let mut current_state = 0;
+        for i in w.chars() {
+            match self.trans[current_state].get(&i) {
+                Some(x) => {
+                    current_state = *x;
+                }, None => { current_state = 1_000_000_000_000; break; }
+            }
+        }
+        println!("Accepted {:?} by {} is {}", w, current_state, self.searching_info.1[current_state]);
+
+        // 受理した状態に対応する位置情報を確認
+        if current_state != 1_000_000_000_000 { 
+            for position in self.position[current_state].clone() {
+                //println!("{:?}", position);
+                let ww: Vec<char> = w.chars().collect();
+                for i in 0 .. ww.len() {
+                    //println!("{} == {} {} + {} - {}", ww[i ], self.txt[position.0][position.1 + i - ww.len()], position.1, i ,ww.len());
+                    if ww[i] != self.txt[position.0][position.1 + i - ww.len()] {
+                        break;
+                    }
+
+                    if i == ww.len() - 1 { endpos.push(position); }
+                }
+            }
+        }
+
+        let mut sp_inverse = self.sp_inverse[self.searching_info.1[current_state]];
+        //println!("SP_INVERSE {:?}", sp_inverse);
+        let mut s_inverse = Vec::new();
+        if sp_inverse.0 != sp_inverse.1 {
+            let end = sp_inverse.1;
+            sp_inverse = self.sp_inverse[sp_inverse.0+1];
+            loop {
+                //println!("{:?}", sp_inverse.0);
+                s_inverse.push(sp_inverse.0);
+                if sp_inverse.1 == end { break; }
+                sp_inverse = self.sp_inverse[sp_inverse.1+1];
+            }
+        }
+        //println!("S_INVERSE {:?}", s_inverse);
+
+        for j in s_inverse {
+            for position in self.position[self.searching_info.0[j]].clone() {
+                //println!("{:?}", position);
+                let ww: Vec<char> = w.chars().collect();
+                for i in 0 .. ww.len() {
+                    //println!("{} == {} {} + {} - {}", ww[i], self.txt[position.0][position.1 + i - ww.len()], position.1, i ,ww.len());
+                    if ww[i] != self.txt[position.0][position.1 + i - ww.len()] {
+                        break;
+                    }
+
+                    if i == ww.len() - 1 { 
+                        sp_inverse = self.sp_inverse[j];
+                        //println!("SP_INVERSE {:?}", sp_inverse);
+                        for k in sp_inverse.0 .. sp_inverse.1+1 {
+                            //println!("koko {} {}", k, self.searching_info.0[k]);
+                            endpos = [endpos.clone(), self.position[self.searching_info.0[k]].clone()].concat(); 
+                        }
+                    }
+                }
+            }
+        }
+
+        endpos
     }
 }
