@@ -43,16 +43,16 @@ fn main(){
     //println!("{:?}", fa.search("abbac".to_string()));
     //println!("{:?}", fa.search("html".to_string()));
     //println!("{:?}", fa.search("test".to_string()));
-    //loop {
-    //    let s = {
-    //        let mut s = String::new(); // バッファを確保
-    //        std::io::stdin().read_line(&mut s).unwrap(); // 一行読む。失敗を無視
-    //        s.trim_right().to_owned() // 改行コードが末尾にくっついてくるので削る
-    //    };
+    loop {
+        let s = {
+            let mut s = String::new(); // バッファを確保
+            std::io::stdin().read_line(&mut s).unwrap(); // 一行読む。失敗を無視
+            s.trim_right().to_owned() // 改行コードが末尾にくっついてくるので削る
+        };
 
-    //    // println!("{:?}", fa.search(s));
-    //    println!("{:?}", fa.search(s).len());
-    //}
+        // println!("{:?}", fa.search(s));
+        println!("{:?}", fa.search(s).len());
+    }
     //create_index(fa);
 }
 
@@ -545,10 +545,13 @@ impl FactorOracleOnline {
 
                         if i == ww.len() - 1 { 
                             sp_inverse = self.sp_inverse[j];
-                            println!("SP_INVERSE {:?}", sp_inverse);
+                            //println!("SP_INVERSE {:?}", sp_inverse);
                             for k in sp_inverse.0 .. sp_inverse.1+1 {
                                 //println!("koko {} {}", k, self.searching_info.0[k]);
-                                endpos = [endpos.clone(), self.position[self.searching_info.0[k]].clone()].concat(); 
+                                //endpos = [endpos.clone(), self.position[self.searching_info.0[k]].clone()].concat(); 
+                                for kk in self.position[self.searching_info.0[k]].clone() {
+                                    endpos.push(kk);
+                                }
                             }
                         }
                     }
