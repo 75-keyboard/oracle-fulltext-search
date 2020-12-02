@@ -18,11 +18,41 @@ fn main(){
     //searchable.insert(6);
     //println!("{:?}", fa.state_set_tree.search(&searchable));
 
+    let mut s: Vec<Vec<char>> = Vec::new();
+    //for i in 0..100 {
+    //    s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+    //}
+    //s.push(read_to_string("data/manual.txt").unwrap().chars().collect::<Vec<char>>());
+    // for result in BufReader::new(File::open("data/test.txt").unwrap()).lines() {
+    //     s.push(result.unwrap().chars().collect());
+    // }
+//    println!("{:?}", s);
+    
     // ファクターオラクルの遷移のラベルの出現頻度からハフマン符号を構成
-    let fa = FactorOracleOnline::new();
+    let fa = FactorOracleOnline::new({
+        let mut s = Vec::new();
+        for i in 0..10 {
+            s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+        }
+        println!("Files loaded.");
+
+        s
+    });
+    //println!("{:?}", fa);
 
     //println!("{:?}", fa.search("abbac".to_string()));
-    println!("{:?}", fa.search("aa".to_string()));
+    //println!("{:?}", fa.search("html".to_string()));
+    //println!("{:?}", fa.search("test".to_string()));
+    //loop {
+    //    let s = {
+    //        let mut s = String::new(); // バッファを確保
+    //        std::io::stdin().read_line(&mut s).unwrap(); // 一行読む。失敗を無視
+    //        s.trim_right().to_owned() // 改行コードが末尾にくっついてくるので削る
+    //    };
+
+    //    // println!("{:?}", fa.search(s));
+    //    println!("{:?}", fa.search(s).len());
+    //}
     //create_index(fa);
 }
 
@@ -255,7 +285,8 @@ impl PartialEq for TreeNode {
  */
 struct Trie {
     alphabet: Vec<char>,
-    trans: BTreeMap<(usize, char), usize>,
+    trans: HashMap<(usize, char), usize>,
+    //trans: BTreeMap<(usize, char), usize>,
     position: Vec<Vec<(usize, usize)>>,
     txt: Vec<Vec<char>>,
 }
@@ -264,49 +295,41 @@ impl Trie {
     /**
      * 文字列からトライ木を構築
      */
-    pub fn new() -> Trie {
-        let mut s: Vec<Vec<char>> = Vec::new();
-        //for i in 0..100 {
-        //    s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
-        //}
-        //s.push(read_to_string("data/manual.txt").unwrap().chars().collect::<Vec<char>>());
-        // for result in BufReader::new(File::open("data/test.txt").unwrap()).lines() {
-        //     s.push(result.unwrap().chars().collect());
-        // }
-    //    println!("{:?}", s);
-        s.push("abbac".chars().collect());
-        s.push("aaaac".chars().collect());
-    
-        let mut trie_trans = BTreeMap::new();
-        let mut reverse_trans: BTreeMap<usize, (char, usize)> = BTreeMap::new();
+    pub fn new(s: Vec<Vec<char>>) -> Trie {
+        let mut trie_trans = HashMap::new();
+        //let mut trie_trans = BTreeMap::new();
+        //let mut reverse_trans: BTreeMap<usize, (char, usize)> = BTreeMap::new();
         let mut trie_alphabet = HashSet::new();
-        let mut finals = Vec::new();
+        //let mut finals = Vec::new();
         let mut last = 0;
         let mut dist: Vec<Vec<(usize, usize)>> = Vec::new();
         dist.push(Vec::new());
+        let mut summ = 0;
         for i in 0..s.len() {
             dist[i].push((i, 0));
             let mut crt = 0;
+            summ += s[i].len();
             for j in 0..s[i].len() {
                 trie_alphabet.insert(s[i][j]);
                 match trie_trans.get(&(crt, s[i][j])) {
                     Some(x) => {
                         crt=*x;
                         dist[crt-1].push((i, j+1));
-                        if j == s[i].len()-1 { finals.push(crt-1) }
+                        //if j == s[i].len()-1 { finals.push(crt-1) }
                     },
                     None => {
                         dist.push(Vec::new());
                         dist[last+1].push((i, j+1));
                         last+=1;
                         trie_trans.insert((crt, s[i][j]), last);
-                        reverse_trans.insert(last, (s[i][j], crt));
+                        //reverse_trans.insert(last, (s[i][j], crt));
                         crt=last;
-                        if j == s[i].len()-1 { finals.push(crt) }
+                        //if j == s[i].len()-1 { finals.push(crt) }
                     }
                 }
             }
         }
+        println!("SUMMARY {}", summ);
 
         //println!("finals {:?}", finals);
         //let mut next = finals.clone();
@@ -336,6 +359,7 @@ impl Trie {
 
         let mut trie_alphabet = trie_alphabet.into_iter().collect::<Vec<char>>();
         trie_alphabet.sort();
+        println!("Trie constructed.");
 
         Trie {
             alphabet: trie_alphabet,
@@ -363,20 +387,34 @@ impl FactorOracleOnline {
     /**
      * Allauzenのオンラインファクターオラクル構成法
      */
-    pub fn new() -> FactorOracleOnline {
+    pub fn new(s: Vec<Vec<char>>) -> FactorOracleOnline {
         //let p :Vec<char> = "abbbaab".chars().collect();
-        let trie = Trie::new();
+        let trie = Trie::new(s);
 
-        let mut oracle = FactorOracleOnline::init(trie.trans.len()+1, trie.position, trie.txt);
+        let mut oracle = FactorOracleOnline::init(trie.trans.len()+1, trie.position.clone(), trie.txt);
 
-        for ((src, sigma), dst) in trie.trans {
+        let mut v: Vec<_> = trie.trans.into_iter().collect();
+        v.sort_by(|x,y| x.0.cmp(&y.0));
+
+        for ((src, sigma), dst) in v {
             //println!("{} {} {}", src, sigma, dst);
             oracle.add_state(src, sigma, dst);
         }
 
+        //for src in 0..trie.position.len() {
+        //    for sigma in &trie.alphabet {
+        //        match trie.trans.get(&(src, *sigma)) {
+        //            Some(dst) => {
+        //                oracle.add_state(src, *sigma, *dst);
+        //            }, None => {}
+        //        }
+        //    }
+        //}
+
         oracle.organize_seaching_info();
 
-        println!("{:?}", oracle);
+        println!("Oracle constructed");
+        //println!("{:?}", oracle);
         oracle
     }
 
@@ -394,8 +432,7 @@ impl FactorOracleOnline {
     fn init(len: usize, position: Vec<Vec<(usize, usize)>>, txt: Vec<Vec<char>>) -> FactorOracleOnline {
         let mut supply_function :Vec<usize> = vec![0; len];
         supply_function[0] = 1_000_000_000_000;      
-        let mut trans: Vec<HashMap<char, usize>>= Vec::new();
-        trans.push(HashMap::new());
+        let trans: Vec<HashMap<char, usize>>= vec![HashMap::new(); len];
         FactorOracleOnline { 
             state_num: 0,
             trans: trans,
@@ -416,14 +453,12 @@ impl FactorOracleOnline {
         let q = src.clone();
         let i = dst.clone();
         self.state_num += 1;
-        self.trans.push(HashMap::new());
         self.trans[q].insert(sigma, i);
 
         let counter = self.occurence.entry(sigma).or_insert(0);
         *counter += 1;
 
         let mut k = self.supply_function[q];
-        
         while k != 1_000_000_000_000 {
             if let Some(_) = self.trans[k].get(&sigma) { break }
             self.trans[k].insert(sigma, i);
@@ -466,15 +501,15 @@ impl FactorOracleOnline {
                 }, None => { current_state = 1_000_000_000_000; break; }
             }
         }
-        println!("Accepted {:?} by {} is {}", w, current_state, self.searching_info.1[current_state]);
 
         // 受理した状態に対応する位置情報を確認
         if current_state != 1_000_000_000_000 { 
+            println!("Accepted {:?} by {} is {}", w, current_state, self.searching_info.1[current_state]);
             for position in self.position[current_state].clone() {
                 //println!("{:?}", position);
                 let ww: Vec<char> = w.chars().collect();
                 for i in 0 .. ww.len() {
-                    //println!("{} == {} {} + {} - {}", ww[i ], self.txt[position.0][position.1 + i - ww.len()], position.1, i ,ww.len());
+                    // println!("{} == {} {} + {} - {}", ww[i ], self.txt[position.0][position.1 + i - ww.len()], position.1, i ,ww.len());
                     if ww[i] != self.txt[position.0][position.1 + i - ww.len()] {
                         break;
                     }
@@ -482,39 +517,39 @@ impl FactorOracleOnline {
                     if i == ww.len() - 1 { endpos.push(position); }
                 }
             }
-        }
 
-        let mut sp_inverse = self.sp_inverse[self.searching_info.1[current_state]];
-        //println!("SP_INVERSE {:?}", sp_inverse);
-        let mut s_inverse = Vec::new();
-        if sp_inverse.0 != sp_inverse.1 {
-            let end = sp_inverse.1;
-            sp_inverse = self.sp_inverse[sp_inverse.0+1];
-            loop {
-                //println!("{:?}", sp_inverse.0);
-                s_inverse.push(sp_inverse.0);
-                if sp_inverse.1 == end { break; }
-                sp_inverse = self.sp_inverse[sp_inverse.1+1];
+            let mut sp_inverse = self.sp_inverse[self.searching_info.1[current_state]];
+            //println!("SP_INVERSE {:?}", sp_inverse);
+            let mut s_inverse = Vec::new();
+            if sp_inverse.0 != sp_inverse.1 {
+                let end = sp_inverse.1;
+                sp_inverse = self.sp_inverse[sp_inverse.0+1];
+                loop {
+                    //println!("{:?}", sp_inverse.0);
+                    s_inverse.push(sp_inverse.0);
+                    if sp_inverse.1 == end { break; }
+                    sp_inverse = self.sp_inverse[sp_inverse.1+1];
+                }
             }
-        }
-        //println!("S_INVERSE {:?}", s_inverse);
+            println!("S_INVERSE {:?}", s_inverse.len());
 
-        for j in s_inverse {
-            for position in self.position[self.searching_info.0[j]].clone() {
-                //println!("{:?}", position);
-                let ww: Vec<char> = w.chars().collect();
-                for i in 0 .. ww.len() {
-                    //println!("{} == {} {} + {} - {}", ww[i], self.txt[position.0][position.1 + i - ww.len()], position.1, i ,ww.len());
-                    if ww[i] != self.txt[position.0][position.1 + i - ww.len()] {
-                        break;
-                    }
+            let ww: Vec<char> = w.chars().collect();
+            for j in s_inverse {
+                for position in self.position[self.searching_info.0[j]].clone() {
+                    //println!("{:?}", position);
+                    for i in 0 .. ww.len() {
+                        //println!("{} + {} - {}", position.1, i ,ww.len());
+                        if ww[i] != self.txt[position.0][position.1 + i - ww.len()] {
+                            break;
+                        }
 
-                    if i == ww.len() - 1 { 
-                        sp_inverse = self.sp_inverse[j];
-                        //println!("SP_INVERSE {:?}", sp_inverse);
-                        for k in sp_inverse.0 .. sp_inverse.1+1 {
-                            //println!("koko {} {}", k, self.searching_info.0[k]);
-                            endpos = [endpos.clone(), self.position[self.searching_info.0[k]].clone()].concat(); 
+                        if i == ww.len() - 1 { 
+                            sp_inverse = self.sp_inverse[j];
+                            println!("SP_INVERSE {:?}", sp_inverse);
+                            for k in sp_inverse.0 .. sp_inverse.1+1 {
+                                //println!("koko {} {}", k, self.searching_info.0[k]);
+                                endpos = [endpos.clone(), self.position[self.searching_info.0[k]].clone()].concat(); 
+                            }
                         }
                     }
                 }
@@ -522,5 +557,21 @@ impl FactorOracleOnline {
         }
 
         endpos
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_search() {
+        // ファクターオラクルの遷移のラベルの出現頻度からハフマン符号を構成
+        let fa = FactorOracleOnline::new(vec!["abbac".chars().collect(), "aaaac".chars().collect()]);
+
+        //println!("{:?}", fa.search("abbac".to_string()));
+        assert_eq!(vec![(1, 2), (1, 3), (1, 4)], fa.search("aa".to_string()));
+        assert_eq!(vec![(0, 2), (0, 3)], fa.search("b".to_string()));
+        assert_eq!(vec![(0, 5), (1, 5)], fa.search("ac".to_string()));
     }
 }
