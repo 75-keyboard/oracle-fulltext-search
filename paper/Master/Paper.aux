@@ -1,0 +1,95 @@
+\relax 
+\citation{dawg}
+\citation{dawg-bit}
+\citation{allauzen}
+\citation{kato}
+\citation{ohi}
+\@writefile{toc}{\contentsline {chapter}{\numberline {第1章}序論}{1}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {1.1}研究の背景}{1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.2}研究の目的}{2}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {第2章}諸定義}{3}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {2.1}オートマトン}{3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2.1}{\ignorespaces オートマトン例図}}{3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}全文検索問題}{4}\protected@file@percent }
+\citation{allauzen}
+\@writefile{toc}{\contentsline {chapter}{\numberline {第3章}ファクターオラクル}{5}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}ファクターオラクルとは}{5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}Allauzenの構成アルゴリズム}{5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3.1}{\ignorespaces supply function\ $S$の定義}}{5}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces $\textbf  {create\_oracle}(p=p_1p_2...p_m)$}}{6}\protected@file@percent }
+\newlabel{alg1}{{1}{6}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces $\textbf  {add\_letter}(Oracle(p=p_1p_2...p_m), \sigma )$}}{6}\protected@file@percent }
+\newlabel{alg2}{{2}{6}}
+\citation{allauzen}
+\citation{allauzen}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.2}{\ignorespaces create\_oracleによるOracle('abbbaab')の構成例\ 点線はsupply functionを示す\ \cite  {allauzen}より引用}}{7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.1}内部遷移}{7}\protected@file@percent }
+\citation{kato}
+\@writefile{toc}{\contentsline {section}{\numberline {3.3}サフィックスリンクツリー}{8}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3.3}{\ignorespaces Oracle('abbbaab')に対するサフィックスリンクツリー}}{8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.4}検索アルゴリズム}{8}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces $\textbf  {find\_all\_occurence}(Oracle(p), w)$}}{9}\protected@file@percent }
+\newlabel{alg3}{{3}{9}}
+\citation{ohi}
+\citation{ohi}
+\@writefile{toc}{\contentsline {chapter}{\numberline {第4章}文字列集合に対するファクターオラクル}{10}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}文字列集合に対するファクターオラクルとは}{10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}構成アルゴリズム}{10}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}トライ木の構成}{10}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {4}{\ignorespaces $\textbf  {BuildDFA}(D)$}}{11}\protected@file@percent }
+\newlabel{alg4}{{4}{11}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces $D=\{"abbac", "aaaac"\}$を入力としたときのトライ木}}{11}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}文字列集合に対するファクターオラクルの構成}{11}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {5}{\ignorespaces $\textbf  {BuildOracle}(M)$}}{12}\protected@file@percent }
+\newlabel{alg5}{{5}{12}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces $D=\{"abcba", "abbac"\}$から構築したトライ木を入力としたときの文字列集合に対するファクターオラクル}}{12}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}全文検索アルゴリズム}{13}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}部分集合木}{13}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}検索アルゴリズム}{13}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {6}{\ignorespaces $\textbf  {Search}(P)$}}{13}\protected@file@percent }
+\newlabel{alg6}{{6}{13}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces $D=\{"abcba", "abbac"\}$から構築した索引(左:ファクターオラクル、右:部分集合木)}}{14}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {第5章}提案手法}{15}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}先行研究の問題点と改善案}{15}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}Allauzenのアルゴリズムの拡張}{15}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {7}{\ignorespaces $\textbf  {create\_oracle}(M)$}}{16}\protected@file@percent }
+\newlabel{alg7}{{7}{16}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {8}{\ignorespaces $\textbf  {add\_state}(Oracle, q, \sigma , i)$}}{16}\protected@file@percent }
+\newlabel{alg8}{{8}{16}}
+\citation{allauzen}
+\citation{allauzen}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.1}{\ignorespaces create\_oracleによるOracle('abbbaab')の構成例\ 各状態上の赤字はsupply functionを示す\ \cite  {allauzen}より引用}}{17}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}ファクターオラクルの最小化}{17}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.4}検索アルゴリズム}{17}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5.2}{\ignorespaces ファクターオラクル最小化の例}}{18}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.1}検索アルゴリズムで使用するデータの表現}{18}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5.3}{\ignorespaces $SP_{-1}の配列での実装$}}{19}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5.4}{\ignorespaces $S_{-1}とendposの配列での実装$}}{19}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4.2}提案アルゴリズム}{20}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {9}{\ignorespaces $\textbf  {search}(Oracle(D), w)$}}{20}\protected@file@percent }
+\newlabel{alg9}{{9}{20}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {第6章}実験的評価}{21}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}実験結果}{21}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6.1}{\ignorespaces 実験結果}}{21}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.2}実験環境}{21}\protected@file@percent }
+\citation{dawg-bit}
+\@writefile{toc}{\contentsline {chapter}{\numberline {第7章}まとめ}{22}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\bibcite{allauzen}{1}
+\bibcite{kato}{2}
+\bibcite{ohi}{3}
+\bibcite{dawg}{4}
+\bibcite{dawg-bit}{5}

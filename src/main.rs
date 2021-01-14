@@ -5,6 +5,8 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use bit_vec::BitVec;
 
+use std::time::{Instant, Duration};
+
 fn main(){
     // トライ木からファクターオラクルを構築
 //    let fa = FactorOracle::new();
@@ -26,53 +28,173 @@ fn main(){
     //     s.push(result.unwrap().chars().collect());
     // }
 //    println!("{:?}", s);
-    
-    // ファクターオラクルの遷移のラベルの出現頻度からハフマン符号を構成
-    //let fa = FactorOracleOnline::new({
-    //    let mut s: Vec<Vec<char>> = Vec::new();
-    //    for i in 0..1000 {
-    //        s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+    //for i in 0..517431 {
+
+    //// 単語数に対する構築時間実験
+    //println!("ファイル数, 単語数, 文字数, 構築時間, 検索時間(10回平均)");
+    //println!("ファイル数, 状態数, 統合数");
+    //let mut i = 1;
+    //'outer: loop {
+    //    for j in 0..9 {
+    //        if (j+1)*i > 517431 { break 'outer; }
+    //        exec1((j+1)*i);
     //    }
-    //    s.push("abbac".chars().collect());
-    //    s.push("aaaac".chars().collect());
-    //    
-    //    println!("Files loaded.");
-
-    //    s
-    //});
-    let fa = FactorOracleOnline::new_both({
-        let mut s: Vec<Vec<char>> = Vec::new();
-        //for i in 0..1000 {
-        //    s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
-        //}
-        //s.push("abbac".chars().collect());
-        //s.push("aaaac".chars().collect());
-        //
-        println!("Files loaded.");
-
-        s
-    });
-    //println!("{:?}", fa);
-
-    //println!("{:?}", fa.search("abbac".to_string()));
-    println!("{:?}", fa.search("html".to_string()).len());
-    //println!("{:?}", fa.search("test".to_string()));
-    //loop {
-    //    let s = {
-    //        let mut s = String::new(); // バッファを確保
-    //        std::io::stdin().read_line(&mut s).unwrap(); // 一行読む。失敗を無視
-    //        s.trim_end().to_owned() // 改行コードが末尾にくっついてくるので削る
-    //    };
-
-
-    //    let result = fa.search(s);
-    //    //println!("{:?}", result);
-    //    println!("{:?}", result.len());
+    //    i *= 10;
     //}
+
+    // パターン長に対する検索時間実験
+    //exec2(517431);
+    //exec2(531);
     //create_index(fa);
+    exec3();
 }
 
-fn create_index(fa: FactorOracleOnline) {
+fn exec3() {
+    let oracle = FullTextFactorOracle::new({
+        let mut s: Vec<Vec<char>> = Vec::new();
+        let mut sum = 0;
+        for i in 0..100 {
+            //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+            //s.push(read_to_string(format!("data/maildata4/{}.txt", i)).unwrap().chars().collect());
+            for result in BufReader::new(File::open(format!("data/maildata4/{}.txt", i)).unwrap()).lines() {
+                let r = result.unwrap();
+                sum += r.len();
+                s.push(r.chars().collect());
+            }
+        }
+        //s.push("abbac".chars().collect());
+        //s.push("aaaac".chars().collect());
+        println!("moji {}", sum);
+        s
+    });
+}
+
+fn exec2(idx: usize) {
+    let mut max = 0;
+    let mut min = 1_000_000_000;
+    let mut num_words = 0;
+    let mut num = 0;
+    // ファクターオラクルの遷移のラベルの出現頻度からハフマン符号を構成
+    let start = Instant::now();
+    let mut ss: HashMap<usize, Vec<usize>> = HashMap::new();
+    let oracle = FullTextFactorOracle::new({
+        let mut s: Vec<Vec<char>> = Vec::new();
+        for i in 0..idx {
+            //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+            //s.push(read_to_string(format!("data/maildata4/{}.txt", i)).unwrap().chars().collect());
+            for result in BufReader::new(File::open(format!("data/maildata4/{}.txt", i)).unwrap()).lines() {
+                let r = result.unwrap();
+                num_words += 1;
+                num += r.len();
+                max = std::cmp::max(max, r.len());
+                min = std::cmp::min(min, r.len());
+                let tmp = ss.entry(r.len()).or_insert(Vec::new());
+                tmp.push(s.len());
+                s.push(r.chars().collect());
+            }
+        }
+        //s.push("abbac".chars().collect());
+        //s.push("aaaac".chars().collect());
+        s
+    });
+    //let end = start.elapsed();
+    print!("{}, {}, {}, ", idx, num_words, num);
+
+    //println!("パターン長, 検索時間(1000回平均)");
+    //use rand::Rng;
+    //for x in 1..max {
+    //    let mut sum = 0;
+    //    for _ in 0..1000 {
+    //        let mut rng = rand::thread_rng(); // デフォルトの乱数生成器を初期化します
+    //        let mut i;
+    //        if x < min {
+    //            i = rng.gen::<usize>() % (max - min);           // genはRng traitに定義されている
+    //            i += min;
+    //        } else {
+    //            i = rng.gen::<usize>() % (max - x);           // genはRng traitに定義されている
+    //            i += x;
+    //        }
+
+    //        let j: usize = rng.gen::<usize>() % ss[&i].len();           // genはRng traitに定義されている
+    //        let s = oracle.txt[ss[&i][j]].clone()[0..x].iter().collect::<String>();
+    //        println!("{}, {}", x, s);
+
+    //        let start = Instant::now();
+    //        let result = oracle.search(s);
+    //        let end = start.elapsed();
+    //        sum += end.as_micros();
+    //    }
+    //    println!("{}, {}", x, sum/1000);
+    //}
+}
+
+fn exec1(idx: usize) {
+    let mut num_words = 0;
+    let mut num = 0;
+    // ファクターオラクルの遷移のラベルの出現頻度からハフマン符号を構成
+    let start = Instant::now();
+    print!("{}, ", idx);
+    let oracle = Trie::new({
+        let mut s: Vec<Vec<char>> = Vec::new();
+        for i in 0..idx {
+            //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+            //s.push(read_to_string(format!("data/maildata4/{}.txt", i)).unwrap().chars().collect());
+            for result in BufReader::new(File::open(format!("data/maildata4/{}.txt", i)).unwrap()).lines() {
+                let r = result.unwrap();
+                num_words += 1;
+                num += r.len();
+                s.push(r.chars().collect());
+            }
+        }
+        //s.push("abbac".chars().collect());
+        //s.push("aaaac".chars().collect());
+        s
+    });
+    let end = start.elapsed();
+    //print!("{}, {}, {}, {}, ", idx, num_words, num, end.as_micros());
+    ////let fa = FullTextFactorOracle::new_both({
+    ////    let mut s: Vec<Vec<char>> = Vec::new();
+    ////    //for i in 0..1000 {
+    ////    //    s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+    ////    //}
+    ////    //s.push("abbac".chars().collect());
+    ////    //s.push("aaaac".chars().collect());
+    ////    //
+    ////    println!("Files loaded.");
+
+    ////    s
+    ////});
+    ////println!("{:?}", fa);
+
+    ////println!("{:?}", fa.search("abbac".to_string()));
+    ////println!("{:?}", fa.search("html".to_string()).len());
+    ////println!("{:?}", fa.search("test".to_string()));
+
+    //use rand::Rng;
+    //let mut sum = 0;
+    //for _ in 0..1000 {
+    //    //let s = {
+    //    //    let mut s = String::new(); // バッファを確保
+    //    //    std::io::stdin().read_line(&mut s).unwrap(); // 一行読む。失敗を無視
+    //    //    s.trim_end().to_owned() // 改行コードが末尾にくっついてくるので削る
+    //    //};
+    //    use rand::Rng;
+    //    let mut rng = rand::thread_rng(); // デフォルトの乱数生成器を初期化します
+    //    let i: usize = rng.gen();           // genはRng traitに定義されている
+    //    let i: usize = i % num_words;           // genはRng traitに定義されている
+    //    let s = oracle.txt[i as usize].clone();
+
+    //    let start = Instant::now();
+    //    let result = oracle.search(s.iter().collect::<String>());
+    //    let end = start.elapsed();
+    //    sum += end.as_micros();
+    //    //println!("{:?}", result);
+    //    //println!("{:?} {}.{:03}", result.len(), end.as_secs(), end.subsec_nanos() / 1_000_000);
+    //}
+    //println!("{}", sum/1000);
+}
+
+fn create_index(fa: FullTextFactorOracle) {
     let hc = HuffmanCode::new(fa.occurence);
     hc.print_code_info();
     let mut state_table: HashMap<usize, usize> = HashMap::new();
@@ -299,6 +421,7 @@ impl PartialEq for TreeNode {
 /**
  * トライ木
  */
+#[derive(Debug)]
 struct Trie {
     alphabet: Vec<char>,
     //trans: Vec<HashMap<char, usize>>,
@@ -313,37 +436,32 @@ impl Trie {
      */
     pub fn new(s: Vec<Vec<char>>) -> Trie {
         let mut trie_trans = HashMap::new();
-        //let mut reverse_trans: BTreeMap<usize, (char, usize)> = BTreeMap::new();
+        let mut reverse_trans: BTreeMap<usize, (char, usize)> = BTreeMap::new();
         let mut trie_alphabet = HashSet::new();
-        //let mut finals = Vec::new();
+        let mut finals = HashSet::new();
         let mut last = 0;
-        let mut llast = 0;
         let mut dist: Vec<Vec<(usize, usize)>> = Vec::new();
         dist.push(Vec::new());
         let mut summ = 0;
-        //let mut trans = Vec::new();
-        //trans.push(HashMap::new());
         for i in 0..s.len() {
             dist[0].push((i, 0));
             let mut crt = 0;
-            let mut ccrt = 0;
-            summ += s[i].len();
             for j in 0..s[i].len() {
                 trie_alphabet.insert(s[i][j]);
                 match trie_trans.get(&(crt, s[i][j])) {
                     Some(x) => {
                         crt=*x;
                         dist[crt].push((i, j+1));
-                        //if j == s[i].len()-1 { finals.push(crt-1) }
                     },
                     None => {
+                        summ += 1;
                         dist.push(Vec::new());
                         dist[last+1].push((i, j+1));
                         last+=1;
                         trie_trans.insert((crt, s[i][j]), last);
-                        //reverse_trans.insert(last, (s[i][j], crt));
+                        reverse_trans.insert(last, (s[i][j], crt));
                         crt=last;
-                        //if j == s[i].len()-1 { finals.push(crt) }
+                        if j == s[i].len()-1 { finals.insert(crt); } else { finals.remove(&crt); }
                     }
                 }
 
@@ -363,37 +481,74 @@ impl Trie {
                 //}
             }
         }
+        for trans in trie_trans.iter() {
+            finals.remove(&(trans.0).0);
+        }
+
         println!("SUMMARY {}", summ);
 
-        //println!("finals {:?}", finals);
-        //let mut next = finals.clone();
-        //let fisrt = next[0].clone();
-        //let mut mm: Vec<HashMap<char, Vec<usize>>> = Vec::new();
-        //'a: while true {
-        //    let mut hm: HashMap<char, Vec<usize>> = HashMap::new();
-        //    for i in 0..next.len() {
-        //        println!("aa {:?}", next);
-        //        match reverse_trans.get(&next[i]) {
-        //            Some(x) => { 
-        //                next[i]=x.1; 
-        //                match hm.get_mut(&x.0) {
-        //                    Some(y) => {
-        //                        y.push(x.1);
-        //                    },
-        //                    None => {
-        //                        hm.insert(x.0, vec![x.1]);
-        //                    }
-        //                }          
-        //            }, None => { break 'a; }
-        //        };
-        //    }
-        //    mm.push(hm);
-        //}
-        //println!("{:?}", mm);
+        let mut pair_sum = finals.len() - 1;
+        let mut next = vec![finals.into_iter().collect::<Vec<usize>>()];
+        println!("num {}", next[0].len());
+        let mut mm: HashMap<usize, Vec<usize>> = HashMap::new();
+        mm.insert(*next[0].iter().min().unwrap(), next[0].clone());
+
+        'a: loop {
+            let mut tmp: Vec<Vec<usize>> = Vec::new();
+
+            //println!("{:?}", next);
+            for j in 0..next.len() {
+                let mut hm: HashMap<char, Vec<usize>> = HashMap::new();
+                for i in 0..next[j].len() {
+                    //println!("aa {:?}", next);
+                    match reverse_trans.get(&next[j][i]) {
+                        Some(x) => { 
+                            match hm.get_mut(&x.0) {
+                                Some(y) => {
+                                    y.push(x.1);
+                                },
+                                None => {
+                                    hm.insert(x.0, vec![x.1]);
+                                }
+                            }          
+                        }, None => {},
+                    };
+                }
+
+                hm.retain(|_, v| v.len() > 1);
+                for k in hm {
+                    pair_sum += k.1.len() - 1;
+                    mm.insert(*k.1.iter().min().unwrap(), k.1.clone());
+                    tmp.push(k.1);
+                }
+            }
+            next = tmp;
+            if next.len() == 0 { break 'a; }
+//            next = Vec::new();
+//            hm.retain(|&_, v| v.len() != 1);
+//            if hm.len() == 0 { break 'a; } else {
+//                for k in hm {
+//                    pair_sum += k.1.len() - 1;
+//                    mm.insert(*k.1.iter().min().unwrap(), k.1.clone());
+//                    next.push(k.1);
+//                }
+//            }
+        }
+        println!("pair {:?}", pair_sum);
+        println!("{:?}", mm.len());
+        let mut a :HashSet<usize> = HashSet::new();
+        let mut b :Vec<usize> = Vec::new();
+        for i in mm {
+            for j in i.1 {
+                b.push(j.clone());
+                a.insert(j);
+            }
+        }
+        println!("{} {}", a.len(), b.len());
 
         let mut trie_alphabet = trie_alphabet.into_iter().collect::<Vec<char>>();
         trie_alphabet.sort();
-        println!("Trie constructed.");
+        //println!("Trie constructed.");
 
         Trie {
             alphabet: trie_alphabet,
@@ -405,8 +560,9 @@ impl Trie {
     }
 }
 
+
 #[derive(Debug)]
-struct FactorOracleOnline {
+struct FullTextFactorOracle {
     state_num: usize,
     trans: Vec<HashMap<char, usize>>,
     supply_function: Vec<usize>,
@@ -418,14 +574,14 @@ struct FactorOracleOnline {
     txt: Vec<Vec<char>>,
 }
 
-impl FactorOracleOnline {
+impl FullTextFactorOracle {
     /**
      * 初期化
      */
-    fn init_both() -> FactorOracleOnline {
+    fn init_both() -> FullTextFactorOracle {
         let supply_function :Vec<usize> = vec![1_000_000_000_000];
         let trans: Vec<HashMap<char, usize>>= vec![HashMap::new()];
-        FactorOracleOnline { 
+        FullTextFactorOracle { 
             state_num: 0,
             trans: trans,
             supply_function,
@@ -440,10 +596,10 @@ impl FactorOracleOnline {
     /**
      * Allauzenのオンラインファクターオラクル構成法
      */
-    pub fn new_both(s: Vec<Vec<char>>) -> FactorOracleOnline {
+    pub fn new_both(s: Vec<Vec<char>>) -> FullTextFactorOracle {
         //let p :Vec<char> = "abbbaab".chars().collect();
 
-        let mut oracle = FactorOracleOnline::init_both();
+        let mut oracle = FullTextFactorOracle::init_both();
         let mut trie_trans = HashMap::new();
         let mut trie_alphabet = HashSet::new();
         let mut last = 0;
@@ -481,12 +637,12 @@ impl FactorOracleOnline {
                 crt = x;
             }
         }
-        println!("SUMMARY {}", summ);
+        //println!("SUMMARY {}", summ);
 
 
         let mut trie_alphabet = trie_alphabet.into_iter().collect::<Vec<char>>();
         trie_alphabet.sort();
-        println!("Trie constructed.");
+        //println!("Trie constructed.");
 
         let trie = Trie {
             alphabet: trie_alphabet,
@@ -500,7 +656,7 @@ impl FactorOracleOnline {
         oracle.position = trie.position;
         oracle.organize_seaching_info();
 
-        println!("Oracle constructed");
+        //println!("Oracle constructed");
         //println!("{:?}", oracle);
         oracle
     }
@@ -508,11 +664,11 @@ impl FactorOracleOnline {
     /**
      * Allauzenのオンラインファクターオラクル構成法
      */
-    pub fn new(s: Vec<Vec<char>>) -> FactorOracleOnline {
+    pub fn new(s: Vec<Vec<char>>) -> FullTextFactorOracle {
         //let p :Vec<char> = "abbbaab".chars().collect();
         let trie = Trie::new(s);
 
-        let mut oracle = FactorOracleOnline::init(trie.trans.len()+1, trie.position.clone(), trie.txt);
+        let mut oracle = FullTextFactorOracle::init(trie.trans.len()+1, trie.position.clone(), trie.txt);
         //oracle.depth(0, &trie.trans);
 
         //for i in 0..oracle.txt.len() {
@@ -543,7 +699,7 @@ impl FactorOracleOnline {
 
         oracle.organize_seaching_info();
 
-        println!("Oracle constructed");
+        //println!("Oracle constructed");
         //println!("{:?}", oracle);
         oracle
     }
@@ -566,11 +722,11 @@ impl FactorOracleOnline {
     /**
      * 初期化
      */
-    fn init(len: usize, position: Vec<Vec<(usize, usize)>>, txt: Vec<Vec<char>>) -> FactorOracleOnline {
+    fn init(len: usize, position: Vec<Vec<(usize, usize)>>, txt: Vec<Vec<char>>) -> FullTextFactorOracle {
         let mut supply_function :Vec<usize> = vec![0; len];
         supply_function[0] = 1_000_000_000_000;      
         let trans: Vec<HashMap<char, usize>>= vec![HashMap::new(); len];
-        FactorOracleOnline { 
+        FullTextFactorOracle { 
             state_num: 0,
             trans: trans,
             supply_function,
@@ -645,62 +801,65 @@ impl FactorOracleOnline {
             }
         }
 
+        // FOが受理したか
+        if current_state == 1_000_000_000_000 {
+            return endpos;
+        }
+        //println!("Accepted {:?} by {} is {}", w, current_state, self.searching_info.1[current_state]);
+
         // 受理した状態に対応する位置情報を確認
-        if current_state != 1_000_000_000_000 { 
-            println!("Accepted {:?} by {} is {}", w, current_state, self.searching_info.1[current_state]);
-            for position in self.position[current_state].clone() {
-                //println!("{:?}", position);
-                let ww: Vec<char> = w.chars().collect();
+        for position in self.position[current_state].clone() {
+            //println!("{:?}", position);
+            let ww: Vec<char> = w.chars().collect();
+            if ww.len() > position.1 { continue; }
+            for i in 0 .. ww.len() {
+                //println!("{} + {} - {}", position.1, i ,ww.len());
+                if ww[i] != self.txt[position.0][position.1 + i - ww.len()] {
+                    break;
+                }
+
+                if i == ww.len() - 1 { endpos.push(position); }
+            }
+        }
+
+        let mut sp_inverse = self.sp_inverse[self.searching_info.1[current_state]];
+        //println!("SP_INVERSE {:?}", sp_inverse);
+        let mut s_inverse = Vec::new();
+        if sp_inverse.0 != sp_inverse.1 {
+            let end = sp_inverse.1;
+            sp_inverse = self.sp_inverse[sp_inverse.0+1];
+            loop {
+                //println!("{:?}", sp_inverse.0);
+                s_inverse.push(sp_inverse.0);
+                if sp_inverse.1 == end { break; }
+                sp_inverse = self.sp_inverse[sp_inverse.1+1];
+            }
+        }
+        //println!("S_INVERSE {:?}", s_inverse);
+
+        let ww: Vec<char> = w.chars().collect();
+        for j in s_inverse {
+            //println!("{:?}",self.position[self.searching_info.0[j]]);
+            for position in self.position[self.searching_info.0[j]].clone() {
                 if ww.len() > position.1 { continue; }
+                //println!("{:?}", position);
                 for i in 0 .. ww.len() {
                     //println!("{} + {} - {}", position.1, i ,ww.len());
                     if ww[i] != self.txt[position.0][position.1 + i - ww.len()] {
                         break;
-                    }
-
-                    if i == ww.len() - 1 { endpos.push(position); }
-                }
-            }
-
-            let mut sp_inverse = self.sp_inverse[self.searching_info.1[current_state]];
-            //println!("SP_INVERSE {:?}", sp_inverse);
-            let mut s_inverse = Vec::new();
-            if sp_inverse.0 != sp_inverse.1 {
-                let end = sp_inverse.1;
-                sp_inverse = self.sp_inverse[sp_inverse.0+1];
-                loop {
-                    //println!("{:?}", sp_inverse.0);
-                    s_inverse.push(sp_inverse.0);
-                    if sp_inverse.1 == end { break; }
-                    sp_inverse = self.sp_inverse[sp_inverse.1+1];
-                }
-            }
-            println!("S_INVERSE {:?}", s_inverse.len());
-
-            let ww: Vec<char> = w.chars().collect();
-            for j in s_inverse {
-                for position in self.position[self.searching_info.0[j]].clone() {
-                    if ww.len() > position.1 { continue; }
-                    //println!("{:?}", position);
-                    for i in 0 .. ww.len() {
-                        //println!("{} + {} - {}", position.1, i ,ww.len());
-                        if ww[i] != self.txt[position.0][position.1 + i - ww.len()] {
-                            break;
-                        }
-
-                        if i == ww.len() - 1 { 
-                            sp_inverse = self.sp_inverse[j];
-                            //println!("SP_INVERSE {:?}", sp_inverse);
-                            for k in sp_inverse.0 .. sp_inverse.1+1 {
-                                //println!("koko {} {}", k, self.searching_info.0[k]);
-                                //endpos = [endpos.clone(), self.position[self.searching_info.0[k]].clone()].concat(); 
-                                for kk in self.position[self.searching_info.0[k]].clone() {
-                                    endpos.push(kk);
-                                }
+                    } else if i == ww.len() - 1 { 
+                        sp_inverse = self.sp_inverse[j];
+                        //println!("SP_INVERSE {:?}", sp_inverse);
+                        for k in sp_inverse.0 .. sp_inverse.1+1 {
+                            //println!("koko {} {}", k, self.searching_info.0[k]);
+                            //endpos = [endpos.clone(), self.position[self.searching_info.0[k]].clone()].concat(); 
+                            for kk in self.position[self.searching_info.0[k]].clone() {
+                                endpos.push(kk);
                             }
                         }
                     }
                 }
+                break;
             }
         }
 
@@ -715,7 +874,7 @@ mod tests {
     #[test]
     fn test_search() {
         // ファクターオラクルの遷移のラベルの出現頻度からハフマン符号を構成
-        let fa = FactorOracleOnline::new(vec!["abbac".chars().collect(), "aaaac".chars().collect()]);
+        let fa = FullTextFactorOracle::new(vec!["abbac".chars().collect(), "aaaac".chars().collect()]);
 
         //println!("{:?}", fa.search("abbac".to_string()));
         assert_eq!(vec![(1, 2), (1, 3), (1, 4)], fa.search("aa".to_string()));

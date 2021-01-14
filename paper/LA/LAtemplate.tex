@@ -1,0 +1,109 @@
+\newif\ifkokyuroku\kokyurokufalse
+
+%%%%%%%%%%%%%%%
+% 講究録原稿の場合は次の一行を有効にする
+%\kokyurokutrue
+
+\ifkokyuroku
+\documentclass[11pt,a4paper]{jarticle}
+\else
+\documentclass[10pt,a4paper,twocolumn]{jarticle}
+\fi
+
+%%%%%%%%%
+% タイトル
+\title{ファクターオラクルを使用したコンパクトな全文検索索引の構築}
+%%%%%%%%%
+
+\ifkokyuroku
+\usepackage{authblk}
+\renewcommand\Authsep{\qquad}
+\renewcommand\Authand{\qquad}
+\renewcommand\Authands{\qquad}
+
+%%%%%%%%%
+% 講究録用（著者情報）
+\author[1]{佐藤明幸}
+\author[2]{山本博章}
+\author[3]{藤原洋志}
+
+\affil[1]{
+ 信州大学大学院総合理工学研究科 \authorcr
+ Graduate School of Science and Technology, Shinshu University
+}
+\affil[2]{
+ 信州大学大学院総合理工学研究科 \authorcr
+ Graduate School of Science and Technology, Shinshu University
+}
+\affil[3]{
+ 信州大学大学院総合理工学研究科 \authorcr
+ Graduate School of Science and Technology, Shinshu University
+}
+% end of 講究録用
+%%%%%%%%%
+
+\setlength{\topmargin}{-0.3cm}
+\setlength{\textheight}{23cm}
+\setlength{\oddsidemargin}{0.5cm}
+\setlength{\textwidth}{15.0cm}
+
+\else
+
+%%%%%%%%%
+% 予稿用（講演番号と著者情報）
+\def\kouenbangou{S10} %数字を自分の講演番号に書き換えて下さい．
+\author{
+	佐藤明幸\thanks{信州大学大学院総合理工学研究科} \and
+	山本博章\footnotemark[1] \and
+  藤原洋志\footnotemark[1]
+	%「\footnotemark[N]」で第N著者と同じマークが付きます．
+}
+% end of 予稿用
+%%%%%%%%%
+
+\makeatletter
+\def\ps@LAheadings{
+	\def\@oddhead{}
+	\def\@evenhead{}
+	\def\@evenfoot{\hfil \kouenbangou\,--\,\thepage\hfill}
+	\def\@oddfoot{\hfil \kouenbangou\,--\,\thepage\hfil}
+}
+\def\ps@LAtitleheadings{
+	\def\@oddhead{2020年度冬のLAシンポジウム\,[\kouenbangou]\hfil}
+	\def\@evenhead{}
+	\def\@evenfoot{\hfil \kouenbangou\,--\,\thepage\hfill}
+	\def\@oddfoot{\hfil \kouenbangou\,--\,\thepage\hfil}
+}
+\makeatother
+
+\pagestyle{LAheadings}
+\fi
+
+\date{}
+
+%%%%%%%%%
+% ダミーの文章、および定規を生成する記述です。原稿作成の際は消去して構いません
+\usepackage{blindtext}
+\usepackage[type=none]{fgruler}
+%%%%%%%%%
+
+\begin{document}
+\maketitle
+
+\ifkokyuroku
+\else
+\thispagestyle{LAtitleheadings}
+\fi
+
+以下に，本文を記述して下さい．
+
+%%%%%%%%%
+% ダミーの文章、および定規を生成する記述です。原稿作成の際は消去下さい
+\fgruler{upperleft}{0cm}{0cm}
+\Blindtext
+\fgruler{upperleft}{0cm}{0cm}
+\Blindtext
+%%%%%%%%%
+
+
+\end{document}

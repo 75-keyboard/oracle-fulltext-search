@@ -1,0 +1,127 @@
+PWD /home/akihide/Repositories/m1/oracle-fulltext-search/paper/Master
+INPUT /usr/share/texmf-dist/web2c/texmf.cnf
+INPUT /usr/share/texmf-dist/web2c/texmf.cnf
+INPUT /var/lib/texmf/web2c/eptex/platex.fmt
+INPUT Paper.tex
+OUTPUT Paper.log
+INPUT /usr/share/texmf-dist/tex/platex/base/jreport.cls
+INPUT /usr/share/texmf-dist/tex/platex/base/jreport.cls
+INPUT /usr/share/texmf-dist/tex/platex/base/jsize11.clo
+INPUT /usr/share/texmf-dist/tex/platex/base/jsize11.clo
+INPUT /usr/share/texmf-dist/fonts/map/fontname/texfonts.map
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/tmin10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/min10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/public/cm/cmr10.tfm
+INPUT /usr/share/texmf-dist/tex/latex/preprint/authblk.sty
+INPUT /usr/share/texmf-dist/tex/latex/preprint/authblk.sty
+INPUT /usr/share/texmf-dist/tex/latex/algorithms/algorithm.sty
+INPUT /usr/share/texmf-dist/tex/latex/algorithms/algorithm.sty
+INPUT /usr/share/texmf-dist/tex/latex/float/float.sty
+INPUT /usr/share/texmf-dist/tex/latex/float/float.sty
+INPUT /usr/share/texmf-dist/tex/latex/base/ifthen.sty
+INPUT /usr/share/texmf-dist/tex/latex/base/ifthen.sty
+INPUT /usr/share/texmf-dist/tex/latex/algorithmicx/algpseudocode.sty
+INPUT /usr/share/texmf-dist/tex/latex/algorithmicx/algpseudocode.sty
+INPUT /usr/share/texmf-dist/tex/latex/algorithmicx/algorithmicx.sty
+INPUT /usr/share/texmf-dist/tex/latex/algorithmicx/algorithmicx.sty
+INPUT /usr/share/texmf-dist/tex/latex/graphics/graphicx.sty
+INPUT /usr/share/texmf-dist/tex/latex/graphics/graphicx.sty
+INPUT /usr/share/texmf-dist/tex/latex/graphics/keyval.sty
+INPUT /usr/share/texmf-dist/tex/latex/graphics/keyval.sty
+INPUT /usr/share/texmf-dist/tex/latex/graphics/graphics.sty
+INPUT /usr/share/texmf-dist/tex/latex/graphics/graphics.sty
+INPUT /usr/share/texmf-dist/tex/latex/graphics/trig.sty
+INPUT /usr/share/texmf-dist/tex/latex/graphics/trig.sty
+INPUT /usr/share/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+INPUT /usr/share/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+INPUT /usr/share/texmf-dist/tex/latex/graphics-def/dvipdfmx.def
+INPUT /usr/share/texmf-dist/tex/latex/graphics-def/dvipdfmx.def
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/mathptmx.sty
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/mathptmx.sty
+INPUT /usr/share/texmf-dist/tex/latex/l3backend/l3backend-dvips.def
+INPUT /usr/share/texmf-dist/tex/latex/l3backend/l3backend-dvips.def
+INPUT Paper.aux
+INPUT Paper.aux
+OUTPUT Paper.aux
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/omlptm.fd
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/t1ptm.fd
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/ot1ptm.fd
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/omsptm.fd
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/ts1ptm.fd
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/ot1ptm.fd
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/ot1ptm.fd
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmr7t.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/tmin10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/min10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmr7t.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/tmin10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/min10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmr7t.tfm
+OUTPUT Paper.dvi
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/tmin10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/min10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmr7t.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/tgoth10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/goth10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/tgoth10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/goth10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/ot1ztmcm.fd
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/ot1ztmcm.fd
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/zptmcm7t.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/zptmcm7t.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/zptmcm7t.tfm
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/omlztmcm.fd
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/omlztmcm.fd
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/zptmcm7m.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/zptmcm7m.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/zptmcm7m.tfm
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/omsztmcm.fd
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/omsztmcm.fd
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/zptmcm7y.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/zptmcm7y.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/zptmcm7y.tfm
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/omxztmcm.fd
+INPUT /usr/share/texmf-dist/tex/latex/psnfss/omxztmcm.fd
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/zptmcm7v.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/zptmcm7v.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/zptmcm7v.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/min8.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/min6.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
+INPUT automaton.png
+INPUT extractbb -B cropbox -O automaton.png
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/tgoth10.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/goth10.tfm
+INPUT defsup.png
+INPUT extractbb -B cropbox -O defsup.png
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/tmin9.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/ptex-fonts/standard/min9.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmr7t.tfm
+INPUT createfo.png
+INPUT extractbb -B cropbox -O createfo.png
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmr7t.tfm
+INPUT /usr/share/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
+INPUT slt.png
+INPUT extractbb -B cropbox -O slt.png
+INPUT trie.png
+INPUT extractbb -B cropbox -O trie.png
+INPUT sub.png
+INPUT extractbb -B cropbox -O sub.png
+INPUT subcon.png
+INPUT extractbb -B cropbox -O subcon.png
+INPUT mfo.png
+INPUT extractbb -B cropbox -O mfo.png
+INPUT pair.png
+INPUT extractbb -B cropbox -O pair.png
+INPUT sp.png
+INPUT extractbb -B cropbox -O sp.png
+INPUT se.png
+INPUT extractbb -B cropbox -O se.png
+INPUT Paper.aux
