@@ -5,14 +5,166 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use bit_vec::BitVec;
 
-fn main(){
-    // 入力の文字列からトライ木を構築
-    let tries = Trie::new();
-//    println!("{:?}", tries.alphabet);
-    println!("created trie--------------------------------");
+use std::time::{Instant, Duration};
 
+fn main(){
+    exec1(1);
+    exec1(10);
+    exec1(100);
+    exec1(1000);
+    exec1(10000);
+    exec1(100000);
+    exec1(500000);
+}
+
+fn exec3() {
+    let oracle = FactorOracle::new({
+        let mut s: Vec<Vec<char>> = Vec::new();
+        let mut sum = 0;
+        for i in 0..100 {
+            //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+            //s.push(read_to_string(format!("data/maildata4/{}.txt", i)).unwrap().chars().collect());
+            for result in BufReader::new(File::open(format!("data/maildata4/{}.txt", i)).unwrap()).lines() {
+                let r = result.unwrap();
+                sum += r.len();
+                s.push(r.chars().collect());
+            }
+        }
+        //s.push("abbac".chars().collect());
+        //s.push("aaaac".chars().collect());
+        println!("moji {}", sum);
+        s
+    });
+}
+
+fn exec2(idx: usize) {
+    let mut max = 0;
+    let mut min = 1_000_000_000;
+    let mut num_words = 0;
+    let mut num = 0;
+    // ファクターオラクルの遷移のラベルの出現頻度からハフマン符号を構成
+    let start = Instant::now();
+    let mut ss: HashMap<usize, Vec<usize>> = HashMap::new();
+    let oracle = FactorOracle::new({
+        let mut s: Vec<Vec<char>> = Vec::new();
+        for i in 0..idx {
+            //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+            //s.push(read_to_string(format!("data/maildata4/{}.txt", i)).unwrap().chars().collect());
+            for result in BufReader::new(File::open(format!("data/maildata4/{}.txt", i)).unwrap()).lines() {
+                let r = result.unwrap();
+                num_words += 1;
+                num += r.len();
+                max = std::cmp::max(max, r.len());
+                min = std::cmp::min(min, r.len());
+                let tmp = ss.entry(r.len()).or_insert(Vec::new());
+                tmp.push(s.len());
+                s.push(r.chars().collect());
+            }
+        }
+        //s.push("abbac".chars().collect());
+        //s.push("aaaac".chars().collect());
+        s
+    });
+    let end = start.elapsed();
+    println!("{}, {}, {}, {}.{:03}", idx, num_words, num, end.as_secs(), end.subsec_nanos() / 1_000_000);
+
+    //println!("パターン長, 検索時間(1000回平均)");
+    //use rand::Rng;
+    //for x in 1..max {
+    //    let mut sum = 0;
+    //    for _ in 0..1000 {
+    //        let mut rng = rand::thread_rng(); // デフォルトの乱数生成器を初期化します
+    //        let mut i;
+    //        if x < min {
+    //            i = rng.gen::<usize>() % (max - min);           // genはRng traitに定義されている
+    //            i += min;
+    //        } else {
+    //            i = rng.gen::<usize>() % (max - x);           // genはRng traitに定義されている
+    //            i += x;
+    //        }
+
+    //        let j: usize = rng.gen::<usize>() % ss[&i].len();           // genはRng traitに定義されている
+    //        let s = oracle.txt[ss[&i][j]].clone()[0..x].iter().collect::<String>();
+    //        println!("{}, {}", x, s);
+
+    //        let start = Instant::now();
+    //        let result = oracle.search(s);
+    //        let end = start.elapsed();
+    //        sum += end.as_micros();
+    //    }
+    //    println!("{}, {}", x, sum/1000);
+    //}
+}
+
+fn exec1(idx: usize) {
+    let mut num_words = 0;
+    let mut num = 0;
+
+    let start = Instant::now();
+    print!("{}, ", idx);
+    let oracle = FactorOracle::new({
+        let mut s: Vec<Vec<char>> = Vec::new();
+        for i in 0..idx {
+            //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+            //s.push(read_to_string(format!("data/maildata4/{}.txt", i)).unwrap().chars().collect());
+            for result in BufReader::new(File::open(format!("data/maildata4/{}.txt", i)).unwrap()).lines() {
+                let r = result.unwrap();
+                num_words += 1;
+                num += r.len();
+                s.push(r.chars().collect());
+            }
+        }
+        //s.push("abbac".chars().collect());
+        //s.push("aaaac".chars().collect());
+        s
+    });
+    let end = start.elapsed();
+    println!("{}, {}, {}, {},", idx, num_words, num, end.as_micros());
+    //let fa = FullTextFactorOracle::new_both({
+    //    let mut s: Vec<Vec<char>> = Vec::new();
+    //    //for i in 0..1000 {
+    //    //    s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+    //    //}
+    //    //s.push("abbac".chars().collect());
+    //    //s.push("aaaac".chars().collect());
+    //    //
+    //    println!("Files loaded.");
+
+    //    s
+    //});
+    //println!("{:?}", fa);
+
+    //println!("{:?}", fa.search("abbac".to_string()));
+    //println!("{:?}", fa.search("html".to_string()).len());
+    //println!("{:?}", fa.search("test".to_string()));
+
+//    use rand::Rng;
+//    let mut sum = 0;
+//    for _ in 0..1000 {
+//        //let s = {
+//        //    let mut s = String::new(); // バッファを確保
+//        //    std::io::stdin().read_line(&mut s).unwrap(); // 一行読む。失敗を無視
+//        //    s.trim_end().to_owned() // 改行コードが末尾にくっついてくるので削る
+//        //};
+//        use rand::Rng;
+//        let mut rng = rand::thread_rng(); // デフォルトの乱数生成器を初期化します
+//        let i: usize = rng.gen();           // genはRng traitに定義されている
+//        let i: usize = i % num_words;           // genはRng traitに定義されている
+//        let s = oracle.txt[i as usize].clone();
+//
+//        let start = Instant::now();
+//        let result = oracle.search(s.iter().collect::<String>());
+//        let end = start.elapsed();
+//        sum += end.as_micros();
+//        //println!("{:?}", result);
+//        //println!("{:?} {}.{:03}", result.len(), end.as_secs(), end.subsec_nanos() / 1_000_000);
+//    }
+//    println!("{}", sum/1000);
+}
+
+fn create_index(s: Vec<Vec<char>>) {
     // トライ木からファクターオラクルを構築
-    let fa = FactorOracle::new();
+    let fa = FactorOracle::create(s).0;
     println!("{:?}", fa.states);
     println!("created FO--------------------------------");
 //    println!("{:?}", fa.trans);
@@ -125,6 +277,7 @@ fn main(){
     bv.truncate(state_index);
     println!("{:?}", bv);
     println!("{:?}", bv.to_bytes().len());
+
 }
 
 /**
@@ -316,8 +469,8 @@ impl FactorOracle {
     /**
      * 部分集合構成法により、トライ木からファクターオラクルを構築
      */
-    fn create() -> (FactorOracle, HashMap<usize, HashSet<usize>>, HashMap<usize, HashSet<usize>>) {
-        let mut tries = Trie::new();
+    fn create(s: Vec<Vec<char>>) -> (FactorOracle, HashMap<usize, HashSet<usize>>, HashMap<usize, HashSet<usize>>) {
+        let mut tries = Trie::new(s);
         let mut fa_states: Vec<Vec<usize>> = Vec::new();
         fa_states.push((0..tries.trans.len()).collect());
     //    let mut initial_pos: HashSet<(usize, usize)> = HashSet::new();
@@ -342,7 +495,7 @@ impl FactorOracle {
 
         let mut i = 0;
         while fa_states.len() > i {
-println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
+//println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
             'outer: for t in tries.alphabet.iter() {
                 let mut tmp: Vec<usize> = Vec::new();
                 let mut tmp_pos: HashSet<(usize, usize)> = HashSet::new();
@@ -459,8 +612,8 @@ println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
     /**
      * ファクターオラクルを構成し、ビット列にするために逆順のトポロジカルオーダーを記録
      */
-    pub fn new() -> FactorOracle {
-        let (mut fo, mut fa_trans_in, mut fa_trans_out) = FactorOracle::create();
+    pub fn new(s: Vec<Vec<char>>) -> FactorOracle {
+        let (mut fo, mut fa_trans_in, mut fa_trans_out) = FactorOracle::create(s);
         let mut ii = 0;
         for j in fa_trans_out.clone().iter_mut() {
             if j.1.len() == 0 {
@@ -483,7 +636,7 @@ println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
                 }, None => {}
             }
             i+=1;
-            println!("{}, {}", i, l);
+            //println!("{}, {}", i, l);
         }
         fo.order = fo.order[ii..].to_vec();
         fo
@@ -503,11 +656,10 @@ impl Trie {
     /**
      * 文字列からトライ木を構築
      */
-    pub fn new() -> Trie {
+    pub fn new(s: Vec<Vec<char>>) -> Trie {
 
     //    s.push(Bytes::from(&b"abcba"[..]));
     //    s.push(Bytes::from(&b"abbac"[..]));
-        s.push(read_to_string("data/manual.txt").unwrap().chars().collect::<Vec<char>>());
         // for result in BufReader::new(File::open("data/test.txt").unwrap()).lines() {
         //     s.push(result.unwrap().chars().collect());
         // }
