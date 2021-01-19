@@ -8,33 +8,35 @@ use bit_vec::BitVec;
 use std::time::{Instant, Duration};
 
 fn main(){
-    exec1(1);
-    exec1(10);
-    exec1(100);
-    exec1(1000);
-    exec1(10000);
-    exec1(100000);
-    exec1(500000);
+    //exec1(100000);
+    //exec1(200000);
+    //exec1(300000);
+    //exec1(400000);
+    //exec1(500000);
+    exec2(500000);
 }
 
 fn exec3() {
-    let oracle = FactorOracle::new({
+    let oracle = FactorOracle::small({
         let mut s: Vec<Vec<char>> = Vec::new();
         let mut sum = 0;
-        for i in 0..100 {
-            //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
-            //s.push(read_to_string(format!("data/maildata4/{}.txt", i)).unwrap().chars().collect());
-            for result in BufReader::new(File::open(format!("data/maildata4/{}.txt", i)).unwrap()).lines() {
-                let r = result.unwrap();
-                sum += r.len();
-                s.push(r.chars().collect());
-            }
-        }
-        //s.push("abbac".chars().collect());
-        //s.push("aaaac".chars().collect());
-        println!("moji {}", sum);
+        //for i in 0..100 {
+        //    //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+        //    //s.push(read_to_string(format!("data/maildata4/{}.txt", i)).unwrap().chars().collect());
+        //    for result in BufReader::new(File::open(format!("data/maildata4/{}.txt", i)).unwrap()).lines() {
+        //        let r = result.unwrap();
+        //        sum += r.len();
+        //        s.push(r.chars().collect());
+        //    }
+        //}
+        s.push("abbac".chars().collect());
+        s.push("aaaac".chars().collect());
         s
     });
+
+    println!("{:?}", oracle.search("ab".chars().collect::<Vec<char>>()));
+    println!("{:?}", oracle.search("a".chars().collect::<Vec<char>>()));
+    println!("{:?}", oracle.search("b".chars().collect::<Vec<char>>()));
 }
 
 fn exec2(idx: usize) {
@@ -45,7 +47,7 @@ fn exec2(idx: usize) {
     // ファクターオラクルの遷移のラベルの出現頻度からハフマン符号を構成
     let start = Instant::now();
     let mut ss: HashMap<usize, Vec<usize>> = HashMap::new();
-    let oracle = FactorOracle::new({
+    let oracle = FactorOracle::small({
         let mut s: Vec<Vec<char>> = Vec::new();
         for i in 0..idx {
             //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
@@ -68,58 +70,67 @@ fn exec2(idx: usize) {
     let end = start.elapsed();
     println!("{}, {}, {}, {}.{:03}", idx, num_words, num, end.as_secs(), end.subsec_nanos() / 1_000_000);
 
-    //println!("パターン長, 検索時間(1000回平均)");
-    //use rand::Rng;
-    //for x in 1..max {
-    //    let mut sum = 0;
-    //    for _ in 0..1000 {
-    //        let mut rng = rand::thread_rng(); // デフォルトの乱数生成器を初期化します
-    //        let mut i;
-    //        if x < min {
-    //            i = rng.gen::<usize>() % (max - min);           // genはRng traitに定義されている
-    //            i += min;
-    //        } else {
-    //            i = rng.gen::<usize>() % (max - x);           // genはRng traitに定義されている
-    //            i += x;
-    //        }
+    println!("パターン長, 検索時間(1000回平均)");
+    use rand::Rng;
+    for x in 1..max {
+        let mut sum = 0;
+        for _ in 0..1000 {
+            let mut rng = rand::thread_rng(); // デフォルトの乱数生成器を初期化します
+            let mut i;
+            if x < min {
+                i = rng.gen::<usize>() % (max - min);           // genはRng traitに定義されている
+                i += min;
+            } else {
+                i = rng.gen::<usize>() % (max - x);           // genはRng traitに定義されている
+                i += x;
+            }
 
-    //        let j: usize = rng.gen::<usize>() % ss[&i].len();           // genはRng traitに定義されている
-    //        let s = oracle.txt[ss[&i][j]].clone()[0..x].iter().collect::<String>();
-    //        println!("{}, {}", x, s);
+            let j: usize = rng.gen::<usize>() % ss[&i].len();           // genはRng traitに定義されている
+            let s = oracle.txt[ss[&i][j]].clone()[0..x].iter().collect::<String>();
+            //println!("{}, {}", x, s);
 
-    //        let start = Instant::now();
-    //        let result = oracle.search(s);
-    //        let end = start.elapsed();
-    //        sum += end.as_micros();
-    //    }
-    //    println!("{}, {}", x, sum/1000);
-    //}
+            let start = Instant::now();
+            let result = oracle.search(s.chars().collect::<Vec<char>>());
+            let end = start.elapsed();
+            sum += end.as_micros();
+        }
+        println!("{}, {}", x, sum/1000);
+    }
 }
 
 fn exec1(idx: usize) {
-    let mut num_words = 0;
-    let mut num = 0;
+    let mut sum = 0;    
+    let mut nw = 0;
+    let mut n = 0;
 
-    let start = Instant::now();
-    print!("{}, ", idx);
-    let oracle = FactorOracle::new({
-        let mut s: Vec<Vec<char>> = Vec::new();
-        for i in 0..idx {
-            //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
-            //s.push(read_to_string(format!("data/maildata4/{}.txt", i)).unwrap().chars().collect());
-            for result in BufReader::new(File::open(format!("data/maildata4/{}.txt", i)).unwrap()).lines() {
-                let r = result.unwrap();
-                num_words += 1;
-                num += r.len();
-                s.push(r.chars().collect());
+    for _ in 0..10 {
+        let mut num_words = 0;
+        let mut num = 0;
+
+        let start = Instant::now();
+        let oracle = FactorOracle::small({
+            let mut s: Vec<Vec<char>> = Vec::new();
+            for i in 0..idx {
+                //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+                //s.push(read_to_string(format!("data/maildata4/{}.txt", i)).unwrap().chars().collect());
+                for result in BufReader::new(File::open(format!("data/maildata4/{}.txt", i)).unwrap()).lines() {
+                    let r = result.unwrap();
+                    num_words += 1;
+                    num += r.len();
+                    s.push(r.chars().collect());
+                }
             }
-        }
-        //s.push("abbac".chars().collect());
-        //s.push("aaaac".chars().collect());
-        s
-    });
-    let end = start.elapsed();
-    println!("{}, {}, {}, {},", idx, num_words, num, end.as_micros());
+            //s.push("abbac".chars().collect());
+            //s.push("aaaac".chars().collect());
+            s
+        });
+        let end = start.elapsed();
+        sum += end.as_micros();
+        n += num;
+        nw += num_words;
+    }
+    println!("{}, {}, {}, {},", idx, nw/10, n/10, sum/10);
+
     //let fa = FullTextFactorOracle::new_both({
     //    let mut s: Vec<Vec<char>> = Vec::new();
     //    //for i in 0..1000 {
@@ -401,6 +412,7 @@ impl PartialEq for TreeNode {
 /**
  * 状態集合木
  */
+#[derive(Clone)]
 struct State {
     childs: Vec<State>,
     set: HashSet<usize>,
@@ -431,15 +443,15 @@ impl State {
     /**
      * ノードの検索
      */
-    fn search(&mut self, set: &HashSet<usize>) -> HashSet<(usize, usize)> {
-        for child in self.childs.iter_mut() {
+    fn search(self, set: &HashSet<usize>) -> State {
+        for child in self.childs.iter() {
             if child.set.clone() == set.clone() {
-                return child.position.clone();
+                return child.clone();
             } else if child.set.is_superset(&set) {
-                return child.search(&set);
+                return child.clone().search(&set);
             }
         }
-        return self.position.clone();
+        return self.clone();
     }
 
     /**
@@ -452,6 +464,22 @@ impl State {
         }
         
     }
+
+    fn solve(&self) -> HashSet<(usize, usize)> {
+        let mut hs = HashSet::new();
+        self.down(&mut hs);
+        hs
+    }
+
+    fn down(&self, hs: &mut HashSet<(usize, usize)>) {
+        //println!("{:?}", self.set);
+        for h in self.position.clone() {
+            hs.insert(h);
+        }
+        for child in self.childs.clone() {
+            child.down(hs);
+        }
+    }
 }
 
 /**
@@ -463,9 +491,144 @@ struct FactorOracle {
     state_set_tree: State,
     occurence: HashMap<char, i64>,
     order: Vec<usize>,
+    txt: Vec<Vec<char>>
 }
 
 impl FactorOracle {
+    fn search(&self, p: Vec<char>) -> Vec<(usize, usize)> {
+        let mut output = Vec::new();
+
+        let mut crt = 0;
+        for i in 0..p.len() {
+            crt = if let Some(x) = self.trans.get(&crt) {
+                if let Some(&y) = x.get(&p[i]) {
+                    y
+                } else { return Vec::new(); }
+            } else { return Vec::new(); };
+        }
+
+        let mut end = HashSet::new();
+        for i in self.states[crt].clone() {
+            end.insert(i);
+        }
+        
+        let sst = self.state_set_tree.clone().search(&end);
+        //println!("posi {:?}", sst.solve());
+
+        for position in sst.solve() {
+            if p.len() > position.1+1 { continue; }
+            //println!("{:?}", position);
+            for i in 0 .. p.len() {
+                //println!("{} + {} - {}", position.1, i ,p.len());
+                if p[i] != self.txt[position.0][position.1+1 + i - p.len()] {
+                    break;
+                } else if i == p.len() - 1 { 
+                    output.push(position.clone());
+                }
+            }
+        }
+
+        output
+    }
+
+
+    /**
+     * 部分集合構成法により、トライ木からファクターオラクルを構築
+     */
+    fn small(s: Vec<Vec<char>>) -> FactorOracle {
+        let mut tries = Trie::new(s);
+        let mut fa_states: Vec<Vec<usize>> = Vec::new();
+        fa_states.push((0..tries.trans.len()).collect());
+    //    let mut initial_pos: HashSet<(usize, usize)> = HashSet::new();
+    //    for i in dist.iter() {
+    //        for j in i {
+    //            println!("{:?}", j);
+    //            initial_pos.insert(*j);
+    //        }
+    //    }
+        let mut state_set_tree = State {
+            set: (0..tries.trans.len()).collect::<HashSet<usize>>(),
+            childs: Vec::new(),
+            position: HashSet::new()
+    //        position: initial_pos
+        };
+
+        let mut fa_trans: HashMap<usize, HashMap<char, usize>> = HashMap::new();
+        let mut occurence: HashMap<char, i64> = HashMap::new();
+        let mut state_table: HashMap<usize, usize> = HashMap::new();
+
+        let mut i = 0;
+        while fa_states.len() > i {
+//println!("{} {} {}", i, fa_states[i].len(), tries.alphabet.len());
+            'outer: for t in tries.alphabet.iter() {
+                let mut tmp: Vec<usize> = Vec::new();
+                let mut tmp_pos: HashSet<(usize, usize)> = HashSet::new();
+                for s in fa_states[i].iter() {
+                    match tries.trans.get(&(*s, *t)) {
+                        Some(x) => {
+                            tmp.push(*x);
+                        }, None => {}
+                    }
+                }
+                if tmp.len() > 0 {
+                    let counter = occurence.entry(*t).or_insert(0);
+                    *counter += 1;
+                    tmp.sort();
+                    match state_table.get(&tmp[0]) {
+                        Some(&u) => {
+                            match fa_trans.get_mut(&i) {
+                                Some (x) => {
+                                    x.insert(*t, u);
+                                },
+                                None => {
+                                    let mut h: HashMap<char, usize> = HashMap::new();
+                                    h.insert(*t, u);
+                                    fa_trans.insert(i, h);
+                                }
+                            }
+                            continue 'outer;
+                        },
+                        None => {
+                            for i in tmp.clone().iter() {
+                                for j in tries.position[*i-1].iter() {
+                                    tmp_pos.insert(*j);
+                                }
+                            }
+                            match fa_trans.get_mut(&i) {
+                                Some (x) => {
+                                    x.insert(*t, fa_states.len());
+                                },
+                                None => {
+                                    let mut h: HashMap<char, usize> = HashMap::new();
+                                    h.insert(*t, fa_states.len());
+                                    fa_trans.insert(i, h);
+                                }
+                            }
+                            state_table.insert(tmp[0], fa_states.len());
+                            fa_states.push(tmp.clone());
+                            state_set_tree.add(&tmp.into_iter().collect::<HashSet<usize>>(), &tmp_pos);
+                        }
+                    }
+                }
+            }
+            i+=1;
+        }
+        // println!("{:?}", fa_states);
+        // println!("IN: {:?}", fa_trans_in);
+        // println!("OUT: {:?}", fa_trans_out);
+        (
+            FactorOracle {
+                states: fa_states,
+                trans: fa_trans,
+                state_set_tree: state_set_tree,
+                occurence: occurence,
+                order: Vec::new(),
+                txt: tries.txt,
+            }
+        )
+        
+    } 
+
     /**
      * 部分集合構成法により、トライ木からファクターオラクルを構築
      */
@@ -604,6 +767,7 @@ impl FactorOracle {
                 state_set_tree: state_set_tree,
                 occurence: occurence,
                 order: Vec::new(),
+                txt: tries.txt
             }, fa_trans_in, fa_trans_out
         )
         
@@ -649,7 +813,8 @@ impl FactorOracle {
 struct Trie {
     alphabet: Vec<char>,
     trans: HashMap<(usize, char), usize>,
-    position: Vec<Vec<(usize, usize)>>
+    position: Vec<Vec<(usize, usize)>>,
+    txt: Vec<Vec<char>>,
 }
 
 impl Trie {
@@ -696,7 +861,8 @@ impl Trie {
         Trie {
             alphabet: trie_alphabet,
             trans: trie_trans,
-            position: dist
+            position: dist,
+            txt: s
         }
     }
 }
