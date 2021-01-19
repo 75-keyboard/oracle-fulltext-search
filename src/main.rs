@@ -13,30 +13,29 @@ fn main(){
     //exec1(300000);
     //exec1(400000);
     //exec1(500000);
-    exec2(500000);
+    //exec2(500000);
+    exec3();
 }
 
 fn exec3() {
     let oracle = FactorOracle::small({
         let mut s: Vec<Vec<char>> = Vec::new();
         let mut sum = 0;
-        //for i in 0..100 {
-        //    //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
-        //    //s.push(read_to_string(format!("data/maildata4/{}.txt", i)).unwrap().chars().collect());
-        //    for result in BufReader::new(File::open(format!("data/maildata4/{}.txt", i)).unwrap()).lines() {
-        //        let r = result.unwrap();
-        //        sum += r.len();
-        //        s.push(r.chars().collect());
-        //    }
-        //}
-        s.push("abbac".chars().collect());
-        s.push("aaaac".chars().collect());
+        for i in 0..10000 {
+            //s.push(read_to_string(format!("data/txt/man{}.txt", i)).unwrap().chars().collect());
+            //s.push(read_to_string(format!("data/maildata4/{}.txt", i)).unwrap().chars().collect());
+            for result in BufReader::new(File::open(format!("data/maildata4/{}.txt", i)).unwrap()).lines() {
+                let r = result.unwrap();
+                sum += r.len();
+                s.push(r.chars().collect());
+            }
+        }
+        //s.push("abbac".chars().collect());
+        //s.push("aaaac".chars().collect());
         s
     });
 
-    println!("{:?}", oracle.search("ab".chars().collect::<Vec<char>>()));
-    println!("{:?}", oracle.search("a".chars().collect::<Vec<char>>()));
-    println!("{:?}", oracle.search("b".chars().collect::<Vec<char>>()));
+    println!("{:?}", std::mem::size_of_val(&oracle));
 }
 
 fn exec2(idx: usize) {
