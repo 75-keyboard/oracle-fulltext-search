@@ -43,10 +43,10 @@ fn main(){
     //}
 
     // パターン長に対する検索時間実験
-    //exec2(517431);
+    exec2(100000);
     //exec2(531);
     //create_index(fa);
-    exec3();
+    //exec3();
 }
 
 fn exec3() {
@@ -100,32 +100,32 @@ fn exec2(idx: usize) {
     //let end = start.elapsed();
     print!("{}, {}, {}, ", idx, num_words, num);
 
-    //println!("パターン長, 検索時間(1000回平均)");
-    //use rand::Rng;
-    //for x in 1..max {
-    //    let mut sum = 0;
-    //    for _ in 0..1000 {
-    //        let mut rng = rand::thread_rng(); // デフォルトの乱数生成器を初期化します
-    //        let mut i;
-    //        if x < min {
-    //            i = rng.gen::<usize>() % (max - min);           // genはRng traitに定義されている
-    //            i += min;
-    //        } else {
-    //            i = rng.gen::<usize>() % (max - x);           // genはRng traitに定義されている
-    //            i += x;
-    //        }
+    println!("パターン長, 検索時間(1000回平均)");
+    use rand::Rng;
+    for x in 1..max {
+        let mut sum = 0;
+        for _ in 0..1000 {
+            let mut rng = rand::thread_rng(); // デフォルトの乱数生成器を初期化します
+            let mut i;
+            if x < min {
+                i = rng.gen::<usize>() % (max - min);           // genはRng traitに定義されている
+                i += min;
+            } else {
+                i = rng.gen::<usize>() % (max - x);           // genはRng traitに定義されている
+                i += x;
+            }
 
-    //        let j: usize = rng.gen::<usize>() % ss[&i].len();           // genはRng traitに定義されている
-    //        let s = oracle.txt[ss[&i][j]].clone()[0..x].iter().collect::<String>();
-    //        println!("{}, {}", x, s);
+            let j: usize = rng.gen::<usize>() % ss[&i].len();           // genはRng traitに定義されている
+            let s = oracle.txt[ss[&i][j]].clone()[0..x].iter().collect::<String>();
+            //println!("{}, {}", x, s);
 
-    //        let start = Instant::now();
-    //        let result = oracle.search(s);
-    //        let end = start.elapsed();
-    //        sum += end.as_micros();
-    //    }
-    //    println!("{}, {}", x, sum/1000);
-    //}
+            let start = Instant::now();
+            let result = oracle.search(s);
+            let end = start.elapsed();
+            sum += end.as_micros();
+        }
+        println!("{}, {}", x, sum/1000);
+    }
 }
 
 fn exec1(idx: usize) {
