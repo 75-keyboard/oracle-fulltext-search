@@ -13,8 +13,8 @@ fn main(){
     //exec1(300000);
     //exec1(400000);
     //exec1(500000);
-    //exec2(500000);
-    exec3();
+    exec2(100000);
+    //exec3();
 }
 
 fn exec3() {
@@ -85,11 +85,12 @@ fn exec2(idx: usize) {
             }
 
             let j: usize = rng.gen::<usize>() % ss[&i].len();           // genはRng traitに定義されている
-            let s = oracle.txt[ss[&i][j]].clone()[0..x].iter().collect::<String>();
+            let s = oracle.txt[ss[&i][j]].clone()[0..x].iter().collect::<String>().chars().collect::<Vec<char>>();
             //println!("{}, {}", x, s);
+            let positions = oracle.get_candidate(s.clone());
 
             let start = Instant::now();
-            let result = oracle.search(s.chars().collect::<Vec<char>>());
+            let result = oracle.exec_search(s, positions);
             let end = start.elapsed();
             sum += end.as_micros();
         }
@@ -494,6 +495,44 @@ struct FactorOracle {
 }
 
 impl FactorOracle {
+    fn exec_search(&self, p: Vec<char>, positions: HashSet<(usize, usize)>) -> Vec<(usize, usize)> {
+        let mut output = Vec::new();
+        for position in positions {
+            if p.len() > position.1+1 { continue; }
+            //println!("{:?}", position);
+            for i in 0 .. p.len() {
+                //println!("{} + {} - {}", position.1, i ,p.len());
+                if p[i] != self.txt[position.0][position.1+1 + i - p.len()] {
+                    break;
+                } else if i == p.len() - 1 { 
+                    output.push(position.clone());
+                }
+            }
+        }
+
+        output
+    }
+
+    fn get_candidate(&self, p: Vec<char>) -> HashSet<(usize, usize)> {
+        let mut crt = 0;
+        for i in 0..p.len() {
+            crt = if let Some(x) = self.trans.get(&crt) {
+                if let Some(&y) = x.get(&p[i]) {
+                    y
+                } else { return HashSet::new(); }
+            } else { return HashSet::new(); };
+        }
+
+        let mut end = HashSet::new();
+        for i in self.states[crt].clone() {
+            end.insert(i);
+        }
+        
+        let sst = self.state_set_tree.clone().search(&end);
+        //println!("posi {:?}", sst.solve());
+        sst.solve()
+    }
+
     fn search(&self, p: Vec<char>) -> Vec<(usize, usize)> {
         let mut output = Vec::new();
 
@@ -513,8 +552,9 @@ impl FactorOracle {
         
         let sst = self.state_set_tree.clone().search(&end);
         //println!("posi {:?}", sst.solve());
+        let positions = sst.solve();
 
-        for position in sst.solve() {
+        for position in positions {
             if p.len() > position.1+1 { continue; }
             //println!("{:?}", position);
             for i in 0 .. p.len() {
